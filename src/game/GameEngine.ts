@@ -6,7 +6,6 @@
 
 import { IGameState, IGameAction } from '../models/GameState';
 import { IPlayerState } from '../models/Player';
-import { ITile, IEdge, IVertex } from '../models/BoardComponents';
 import { 
   ActionType, 
   BuildingType, 
@@ -396,8 +395,6 @@ export class GameEngine {
       throw new Error('לא ניתן להטיל קוביות בפאזה זו');
     }
 
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-
     // הטלת קוביות (2-12)
     const diceResult = this.rollDice();
 
@@ -477,8 +474,6 @@ export class GameEngine {
    * @throws {Error} אם המסחר לא חוקי
    */
   public executeTrade(gameState: IGameState, action: IGameAction): IGameState {
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-
     switch (action.type) {
       case ActionType.TRADE_WITH_BANK:
         return this.tradeWithBank(gameState, action.playerId, action.giveResources!, action.takeResources!);
@@ -687,7 +682,7 @@ export class GameEngine {
     // ביצוע הבניה
     const stateAfterPayment = this.resourceManager.updateBankAndPlayerResources(
       gameState,
-      { playerId, resourceChange: cost, isDeduction: true }
+      { giverId: playerId, receiverId: null, resources: cost as Record<ResourceType, number> }
     );
 
     const updatedEdges = stateAfterPayment.edges.map(e =>
@@ -737,7 +732,7 @@ export class GameEngine {
     // ביצוע הבניה
     const stateAfterPayment = this.resourceManager.updateBankAndPlayerResources(
       gameState,
-      { playerId, resourceChange: cost, isDeduction: true }
+      { giverId: playerId, receiverId: null, resources: cost as Record<ResourceType, number> }
     );
 
     const updatedVertices = stateAfterPayment.vertices.map(v =>
@@ -873,8 +868,8 @@ export class GameEngine {
   private tradeWithBank(
     gameState: IGameState,
     playerId: string,
-    giveResources: Partial<Record<ResourceType, number>>,
-    takeResources: Partial<Record<ResourceType, number>>
+    _giveResources: Partial<Record<ResourceType, number>>,
+    _takeResources: Partial<Record<ResourceType, number>>
   ): IGameState {
     // מציאת השחקן
     const player = gameState.players.find(p => p.id === playerId);
@@ -893,16 +888,16 @@ export class GameEngine {
   private tradeWithPort(
     gameState: IGameState,
     playerId: string,
-    portType: PortType,
-    giveResources: Partial<Record<ResourceType, number>>,
-    takeResources: Partial<Record<ResourceType, number>>
+    _portType: PortType,
+    _giveResources: Partial<Record<ResourceType, number>>,
+    _takeResources: Partial<Record<ResourceType, number>>
   ): IGameState {
     // בדיקה שהשחקן יש לו גישה לנמל
     const playerVertices = gameState.vertices.filter(v => v.ownerId === playerId);
-    const hasPort = playerVertices.some(v => v.portType === portType);
+    const hasPort = playerVertices.some(v => v.portType === _portType);
     
     if (!hasPort) {
-      throw new Error(`\u05dc\u05e9\u05d7\u05e7\u05df \u05d0\u05d9\u05df \u05d2\u05d9\u05e9\u05d4 \u05dc\u05e0\u05de\u05dc ${portType}`);
+      throw new Error(`לשחקן אין גישה לנמל ${_portType}`);
     }
 
     // TODO: ביצוע המסחר

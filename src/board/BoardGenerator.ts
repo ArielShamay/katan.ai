@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { HexGraphManager } from './HexGraphManager';
-import { shuffleArray, isValidDiceNumberPlacement, generateId } from './BoardUtils';
+import { shuffleArray, isValidDiceNumberPlacement } from './BoardUtils';
 import { IGameState } from '../models/GameState';
 import { ITile, IEdge, IVertex } from '../models/BoardComponents';
 import { ResourceType, PortType, BuildingType, GamePhase, TurnPhase, DevelopmentCardType } from '../models/Enums';
@@ -60,24 +60,22 @@ export class BoardGenerator {
 
     // 7. יצירת מצב המשחק
     const gameState: IGameState = {
-      gameId: generateId(),
-      createdAt: new Date(),
-      phase: GamePhase.SETUP_ROUND_1,
-      turnPhase: TurnPhase.BUILD,
-      turnNumber: 1,
-      players,
-      activePlayerId: playerIds[0],
-      playerOrder: [...playerIds],
       tiles,
       edges,
       vertices,
-      robberTileId,
-      lastDiceRoll: null,
-      longestRoadOwnerId: null,
-      largestArmyOwnerId: null,
+      players,
+      currentPlayerIndex: 0,                       // השחקן הראשון מתחיל
       bankResources,
-      bankDevCards,
-      moveHistory: []
+      developmentCardDeck: bankDevCards,           // חפיסת קלפי פיתוח מעורבבת
+      gamePhase: GamePhase.SETUP,
+      turnPhase: TurnPhase.PLACING_SETTLEMENT,
+      diceResult: null,
+      robberTileId,
+      longestRoadPlayerId: null,
+      largestArmyPlayerId: null,
+      winner: null,
+      setupRound: 1,                               // סיבוב ראשון
+      setupDirection: 1                            // קדימה (1→2→3→4)
     };
 
     return gameState;
