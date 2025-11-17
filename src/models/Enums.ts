@@ -17,7 +17,9 @@ export enum ResourceType {
 export enum BuildingType {
   NONE = "NONE",
   SETTLEMENT = "SETTLEMENT",  // כפר (1 VP, 1 משאב)
-  CITY = "CITY"              // עיר (2 VP, 2 משאבים)
+  CITY = "CITY",              // עיר (2 VP, 2 משאבים)
+  ROAD = "ROAD",              // כביש (לחישוב עלות)
+  DEVELOPMENT_CARD = "DEVELOPMENT_CARD"  // קלף פיתוח (לחישוב עלות)
 }
 
 /**
@@ -50,20 +52,47 @@ export enum PortType {
  * שלבי התור
  */
 export enum TurnPhase {
-  ROLL_DICE = "ROLL_DICE",
-  HANDLE_ROBBER = "HANDLE_ROBBER",      // כאשר זורקים 7
-  DISTRIBUTE_RESOURCES = "DISTRIBUTE_RESOURCES",
-  TRADE = "TRADE",
-  BUILD = "BUILD",
-  END_TURN = "END_TURN"
+  ROLLING_DICE = "ROLLING_DICE",        // הטלת קוביות
+  DISCARDING = "DISCARDING",            // זריקת קלפים (7)
+  MOVING_ROBBER = "MOVING_ROBBER",      // הזזת שודד
+  MAIN_ACTIONS = "MAIN_ACTIONS",        // פעולות ראשיות (בנייה, מסחר, קלפים)
+  PLACING_SETTLEMENT = "PLACING_SETTLEMENT"  // הצבת יישוב (שלב SETUP)
 }
 
 /**
  * שלבי המשחק
  */
 export enum GamePhase {
-  SETUP_ROUND_1 = "SETUP_ROUND_1",      // סיבוב התחלה ראשון (1→4)
-  SETUP_ROUND_2 = "SETUP_ROUND_2",      // סיבוב התחלה שני (4→1)
+  SETUP = "SETUP",                      // שלב התחלה (2 סיבובים)
   MAIN_GAME = "MAIN_GAME",              // משחק רגיל
   GAME_OVER = "GAME_OVER"
 }
+
+/**
+ * סוגי פעולות במשחק
+ */
+export enum ActionType {
+  // פעולות בסיסיות
+  ROLL_DICE = "ROLL_DICE",
+  END_TURN = "END_TURN",
+  
+  // בנייה
+  BUILD_ROAD = "BUILD_ROAD",
+  BUILD_SETTLEMENT = "BUILD_SETTLEMENT",
+  BUILD_CITY = "BUILD_CITY",
+  BUY_DEVELOPMENT_CARD = "BUY_DEVELOPMENT_CARD",
+  
+  // מסחר
+  TRADE_WITH_BANK = "TRADE_WITH_BANK",
+  TRADE_WITH_PORT = "TRADE_WITH_PORT",
+  OFFER_TRADE = "OFFER_TRADE",
+  ACCEPT_TRADE = "ACCEPT_TRADE",
+  
+  // קלפי פיתוח
+  PLAY_DEVELOPMENT_CARD = "PLAY_DEVELOPMENT_CARD",
+  
+  // שודד
+  MOVE_ROBBER = "MOVE_ROBBER",
+  DISCARD_CARDS = "DISCARD_CARDS"
+}
+

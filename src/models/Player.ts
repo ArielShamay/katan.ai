@@ -9,12 +9,15 @@ export interface IPlayerState {
   readonly name: string;                         // שם השחקן
   readonly color: string;                        // צבע (לתצוגה)
   
-  // משאבים (19 מכל סוג בבנק)
+  // משאבים (19 מכל סוג בבנק, DESERT תמיד 0)
   readonly resources: Readonly<Record<ResourceType, number>>;
   
   // קלפי התפתחות (מוסתרים עד שמשחקים)
-  readonly developmentCards: Readonly<Record<DevelopmentCardType, number>>;
+  readonly developmentCards: readonly DevelopmentCardType[];  // רשימת קלפים שיש לשחקן
   readonly developmentCardsPlayedThisTurn: readonly DevelopmentCardType[];  // למניעת משחק כפול
+  
+  // מצב תור
+  readonly hasRolledDice: boolean;               // האם הטיל קוביות בתור הנוכחי
   
   // רכיבים על הלוח
   readonly settlementsRemaining: number;         // 5 בהתחלה

@@ -23,7 +23,7 @@ export class RuleValidator {
    * @param currentEdges - רשימת הצלעות הנוכחית
    * @param currentVertices - רשימת הקודקודים הנוכחית
    * @param isSetupPhase - האם זה שלב ההקמה הראשוני (ללא דרישת קישוריות)
-   * @returns true אם ניתן להציב התיישבות
+   * @returns תוצאת ולידציה
    */
   public canPlaceSettlement(
     playerId: string,
@@ -31,27 +31,27 @@ export class RuleValidator {
     currentEdges: Readonly<IEdge[]>,
     currentVertices: Readonly<IVertex[]>,
     isSetupPhase: boolean = false
-  ): boolean {
+  ): { valid: true } | { valid: false; reason: string } {
     const vertex = currentVertices[vertexId];
 
     // בדיקה 1: הקודקוד חייב להיות ריק
     if (vertex.ownerId !== null) {
-      return false;
+      return { valid: false, reason: 'הקודקוד תפוס' };
     }
 
     // בדיקה 2: חוק המרחק - לא יכול להיות מבנה בקודקודים הסמוכים
     if (!this.checkDistanceRule(vertexId, currentVertices)) {
-      return false;
+      return { valid: false, reason: 'קודקוד קרוב מדי ליישוב אחר' };
     }
 
     // בדיקה 3: בשלב המשחק הרגיל (לא setup) - חייבת להיות קישוריות לדרך של השחקן
     if (!isSetupPhase) {
       if (!this.hasConnectedRoad(playerId, vertexId, currentEdges, currentVertices)) {
-        return false;
+        return { valid: false, reason: 'אין כביש מחובר' };
       }
     }
 
-    return true;
+    return { valid: true };
   }
 
   /**
@@ -110,32 +110,32 @@ export class RuleValidator {
   }
 
   /**
-   * בודק אם ניתן להציב דרך על צלע
+   * בודק אם ניתן להציב כביש על צלע
    * @param playerId - מזהה השחקן
    * @param edgeId - מזהה הצלע
    * @param currentEdges - רשימת הצלעות הנוכחית
    * @param currentVertices - רשימת הקודקודים הנוכחית
-   * @returns true אם ניתן להציב דרך
+   * @returns תוצאת ולידציה
    */
   public canPlaceRoad(
     playerId: string,
     edgeId: number,
     currentEdges: Readonly<IEdge[]>,
     currentVertices: Readonly<IVertex[]>
-  ): boolean {
+  ): { valid: true } | { valid: false; reason: string } {
     const edge = currentEdges[edgeId];
 
     // בדיקה 1: הצלע חייבת להיות ריקה
     if (edge.ownerId !== null) {
-      return false;
+      return { valid: false, reason: 'הצלע תפוסה' };
     }
 
     // בדיקה 2: הדרך חייבת להיות מחוברת לדרך/כפר/עיר של השחקן
     if (!this.isRoadConnected(playerId, edgeId, currentEdges, currentVertices)) {
-      return false;
+      return { valid: false, reason: 'הכביש לא מחובר למבנה או כביש קיים' };
     }
 
-    return true;
+    return { valid: true };
   }
 
   /**
@@ -198,30 +198,30 @@ export class RuleValidator {
    * בודק אם שחקן יכול לשחק קלף פיתוח
    * @param player - מצב השחקן
    * @param cardType - סוג קלף הפיתוח
-   * @returns true אם ניתן לשחק את הקלף
+   * @returns תוצאת ולידציה
    */
-  public canPlayDevCard(player: IPlayerState, cardType: DevelopmentCardType): boolean {
+  public canPlayDevCard(
+    player: IPlayerState,
+    cardType: DevelopmentCardType
+  ): { valid: true } | { valid: false; reason: string } {
     // בדיקה 1: לשחקן חייב להיות קלף מהסוג הזה
-    const cardCount = player.developmentCards[cardType] || 0;
-    if (cardCount === 0) {
-      return false;
+    const hasCard = player.developmentCards.includes(cardType);
+    if (!hasCard) {
+      return { valid: false, reason: 'אין לשחקן את הקלף הזה' };
     }
 
     // בדיקה 2: קלפי נקודות ניצחון לא ניתנים למשחק
     if (cardType === DevelopmentCardType.VICTORY_POINT) {
-      return false;
+      return { valid: false, reason: 'קלפי ניצחון לא ניתן לשחק' };
     }
-
-    // בדיקה 3: לא ניתן לשחק קלף שנקנה באותו תור
-    // הערה: זה יבדק במנוע המשחק על ידי מעקב אחר קלפים שנקנו בתור זה
     
-    // בדיקה 4: ניתן לשחק רק קלף פיתוח אחד לתור (כולל אבירים)
+    // בדיקה 3: ניתן לשחק רק קלף פיתוח אחד לתור
     const alreadyPlayedThisTurn = player.developmentCardsPlayedThisTurn.length > 0;
     if (alreadyPlayedThisTurn) {
-      return false;
+      return { valid: false, reason: 'כבר שיחק קלף פיתוח בתור זה' };
     }
 
-    return true;
+    return { valid: true };
   }
 
   /**
@@ -229,26 +229,26 @@ export class RuleValidator {
    * @param playerId - מזהה השחקן
    * @param vertexId - מזהה הקודקוד
    * @param currentVertices - רשימת הקודקודים הנוכחית
-   * @returns true אם ניתן לשדרג
+   * @returns תוצאת ולידציה
    */
   public canUpgradeToCity(
     playerId: string,
     vertexId: number,
     currentVertices: Readonly<IVertex[]>
-  ): boolean {
+  ): { valid: true } | { valid: false; reason: string } {
     const vertex = currentVertices[vertexId];
 
     // בדיקה 1: חייב להיות כפר של השחקן
     if (vertex.ownerId !== playerId) {
-      return false;
+      return { valid: false, reason: 'היישוב לא שייך לשחקן' };
     }
 
     // בדיקה 2: חייב להיות התיישבות (לא עיר)
     if (vertex.buildingType !== BuildingType.SETTLEMENT) {
-      return false;
+      return { valid: false, reason: 'רק יישוב ניתן לשדרג לעיר' };
     }
 
-    return true;
+    return { valid: true };
   }
 
   /**
@@ -268,25 +268,38 @@ export class RuleValidator {
    * בודק אם מספר הקלפים לזריקה תקין (מחצית, מעוגל למטה)
    * @param player - מצב השחקן
    * @param discardCount - מספר הקלפים לזריקה
-   * @returns true אם מספר הזריקה תקין
+   * @returns תוצאת ולידציה
    */
-  public isValidDiscardCount(player: IPlayerState, discardCount: number): boolean {
+  public isValidDiscardCount(
+    player: IPlayerState,
+    discardCount: number
+  ): { valid: true } | { valid: false; reason: string } {
     const totalResources = Object.values(player.resources).reduce(
       (sum, count) => sum + count,
       0
     );
     const expectedDiscard = Math.floor(totalResources / 2);
-    return discardCount === expectedDiscard;
+    
+    if (discardCount !== expectedDiscard) {
+      return { valid: false, reason: `צריך לזרוק ${expectedDiscard} קלפים` };
+    }
+    return { valid: true };
   }
 
   /**
    * בודק אם מיקום השודד תקין (לא על המדבר, לא על אריח נוכחי)
    * @param newTileId - מזהה האריח החדש
    * @param currentRobberTileId - מזהה האריח הנוכחי של השודד
-   * @returns true אם המיקום תקין
+   * @returns תוצאת ולידציה
    */
-  public isValidRobberPlacement(newTileId: number, currentRobberTileId: number): boolean {
+  public isValidRobberPlacement(
+    newTileId: number,
+    currentRobberTileId: number
+  ): { valid: true } | { valid: false; reason: string } {
     // לא ניתן להשאיר את השודד באותו מקום
-    return newTileId !== currentRobberTileId;
+    if (newTileId === currentRobberTileId) {
+      return { valid: false, reason: 'השודד חייב לעבור למשבצת אחרת' };
+    }
+    return { valid: true };
   }
 }
