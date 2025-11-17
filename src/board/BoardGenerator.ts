@@ -224,7 +224,7 @@ export class BoardGenerator {
     
     return playerIds.map((id, index) => ({
       id,
-      name: `Player ${index + 1}`,
+      name: id,  // השתמש ב-ID כשם השחקן
       color: colors[index],
       resources: {
         [ResourceType.LUMBER]: 0,
