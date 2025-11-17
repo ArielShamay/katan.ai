@@ -1,0 +1,433 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "קונפיגורציה סטטית של לוח קטאן - מבנה הגרף, התפלגות אריחים, ומיקומי נמלים",
+  
+  "tile_distribution": {
+    "description": "התפלגות 19 אריחי המשאבים בלוח",
+    "resources": {
+      "LUMBER": 4,
+      "GRAIN": 4,
+      "WOOL": 4,
+      "BRICK": 3,
+      "ORE": 3,
+      "DESERT": 1
+    },
+    "total": 19
+  },
+  
+  "dice_numbers": {
+    "description": "18 אסימוני מספרים (2-12, ללא 7)",
+    "numbers": [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12],
+    "probabilities": {
+      "2": 1,
+      "3": 2,
+      "4": 3,
+      "5": 4,
+      "6": 5,
+      "8": 5,
+      "9": 4,
+      "10": 3,
+      "11": 2,
+      "12": 1
+    }
+  },
+  
+  "port_locations": {
+    "description": "9 נמלי סחר - 4 כלליים (3:1) + 5 ספציפיים (2:1)",
+    "ports": [
+      {
+        "id": 0,
+        "type": "GENERAL_3_TO_1",
+        "vertexIds": [0, 1],
+        "description": "נמל כללי צפון-מערב"
+      },
+      {
+        "id": 1,
+        "type": "LUMBER_2_TO_1",
+        "vertexIds": [3, 4],
+        "description": "נמל עץ צפון"
+      },
+      {
+        "id": 2,
+        "type": "GENERAL_3_TO_1",
+        "vertexIds": [14, 15],
+        "description": "נמל כללי צפון-מזרח"
+      },
+      {
+        "id": 3,
+        "type": "WOOL_2_TO_1",
+        "vertexIds": [28, 38],
+        "description": "נמל צמר מזרח"
+      },
+      {
+        "id": 4,
+        "type": "GENERAL_3_TO_1",
+        "vertexIds": [45, 46],
+        "description": "נמל כללי דרום-מזרח"
+      },
+      {
+        "id": 5,
+        "type": "GRAIN_2_TO_1",
+        "vertexIds": [50, 51],
+        "description": "נמל חיטה דרום"
+      },
+      {
+        "id": 6,
+        "type": "GENERAL_3_TO_1",
+        "vertexIds": [47, 48],
+        "description": "נמל כללי דרום-מערב"
+      },
+      {
+        "id": 7,
+        "type": "BRICK_2_TO_1",
+        "vertexIds": [26, 37],
+        "description": "נמל לבנים מערב"
+      },
+      {
+        "id": 8,
+        "type": "ORE_2_TO_1",
+        "vertexIds": [7, 17],
+        "description": "נמל עפרות מערב"
+      }
+    ]
+  },
+  
+  "graph_structure": {
+    "description": "מבנה הגרף המשושה - קשרי שכנות בין קודקודים, צלעות ואריחים",
+    
+    "vertices": {
+      "count": 54,
+      "description": "54 קודקודים בלוח, כל אחד מחובר ל-2-3 אריחים ו-2-3 צלעות"
+    },
+    
+    "edges": {
+      "count": 72,
+      "description": "72 צלעות בלוח, כל אחד מחבר 2 קודקודים וסמוך ל-1-2 אריחים"
+    },
+    
+    "tiles": {
+      "count": 19,
+      "description": "19 אריחים משושים, כל אחד עם 6 קודקודים ו-6 צלעות",
+      
+      "tile_layout": [
+        {
+          "tileId": 0,
+          "row": 0,
+          "col": 0,
+          "position": "top-row-left",
+          "adjacentVertexIds": [0, 1, 2, 8, 9, 3],
+          "adjacentEdgeIds": [0, 1, 6, 10, 7, 2],
+          "adjacentTileIds": [3]
+        },
+        {
+          "tileId": 1,
+          "row": 0,
+          "col": 1,
+          "position": "top-row-middle",
+          "adjacentVertexIds": [3, 4, 5, 10, 11, 9],
+          "adjacentEdgeIds": [2, 3, 8, 12, 9, 7],
+          "adjacentTileIds": [0, 3, 4]
+        },
+        {
+          "tileId": 2,
+          "row": 0,
+          "col": 2,
+          "position": "top-row-right",
+          "adjacentVertexIds": [5, 6, 7, 12, 13, 11],
+          "adjacentEdgeIds": [4, 5, 11, 14, 13, 9],
+          "adjacentTileIds": [1, 4]
+        },
+        {
+          "tileId": 3,
+          "row": 1,
+          "col": 0,
+          "position": "second-row-left",
+          "adjacentVertexIds": [8, 9, 10, 16, 17, 14],
+          "adjacentEdgeIds": [6, 15, 18, 22, 19, 10],
+          "adjacentTileIds": [0, 1, 7]
+        },
+        {
+          "tileId": 4,
+          "row": 1,
+          "col": 1,
+          "position": "second-row-middle-left",
+          "adjacentVertexIds": [10, 11, 12, 18, 19, 16],
+          "adjacentEdgeIds": [8, 16, 20, 24, 21, 18],
+          "adjacentTileIds": [1, 2, 3, 7, 8]
+        },
+        {
+          "tileId": 5,
+          "row": 1,
+          "col": 2,
+          "position": "second-row-middle-right",
+          "adjacentVertexIds": [12, 13, 14, 20, 21, 18],
+          "adjacentEdgeIds": [11, 17, 23, 26, 25, 20],
+          "adjacentTileIds": [2, 4, 8]
+        },
+        {
+          "tileId": 6,
+          "row": 1,
+          "col": 3,
+          "position": "second-row-right",
+          "adjacentVertexIds": [14, 15, 16, 22, 23, 20],
+          "adjacentEdgeIds": [13, 14, 27, 29, 28, 23],
+          "adjacentTileIds": [2, 5, 8]
+        },
+        {
+          "tileId": 7,
+          "row": 2,
+          "col": 0,
+          "position": "third-row-left",
+          "adjacentVertexIds": [17, 18, 19, 26, 27, 24],
+          "adjacentEdgeIds": [19, 30, 34, 40, 36, 22],
+          "adjacentTileIds": [3, 4, 11]
+        },
+        {
+          "tileId": 8,
+          "row": 2,
+          "col": 1,
+          "position": "third-row-middle-left (CENTER)",
+          "adjacentVertexIds": [19, 20, 21, 28, 29, 26],
+          "adjacentEdgeIds": [21, 31, 35, 42, 38, 34],
+          "adjacentTileIds": [4, 5, 7, 11, 12]
+        },
+        {
+          "tileId": 9,
+          "row": 2,
+          "col": 2,
+          "position": "third-row-middle (CENTER - DESERT)",
+          "adjacentVertexIds": [21, 22, 23, 30, 31, 28],
+          "adjacentEdgeIds": [25, 32, 37, 44, 41, 35],
+          "adjacentTileIds": [5, 6, 8, 12, 13]
+        },
+        {
+          "tileId": 10,
+          "row": 2,
+          "col": 3,
+          "position": "third-row-middle-right (CENTER)",
+          "adjacentVertexIds": [23, 24, 25, 32, 33, 30],
+          "adjacentEdgeIds": [28, 33, 39, 46, 43, 37],
+          "adjacentTileIds": [6, 9, 13]
+        },
+        {
+          "tileId": 11,
+          "row": 3,
+          "col": 0,
+          "position": "fourth-row-left",
+          "adjacentVertexIds": [27, 28, 29, 37, 38, 34],
+          "adjacentEdgeIds": [36, 47, 52, 58, 53, 40],
+          "adjacentTileIds": [7, 8, 15]
+        },
+        {
+          "tileId": 12,
+          "row": 3,
+          "col": 1,
+          "position": "fourth-row-middle-left",
+          "adjacentVertexIds": [29, 30, 31, 39, 40, 37],
+          "adjacentEdgeIds": [38, 48, 54, 60, 55, 52],
+          "adjacentTileIds": [8, 9, 11, 15, 16]
+        },
+        {
+          "tileId": 13,
+          "row": 3,
+          "col": 2,
+          "position": "fourth-row-middle-right",
+          "adjacentVertexIds": [31, 32, 33, 41, 42, 39],
+          "adjacentEdgeIds": [41, 49, 56, 62, 57, 54],
+          "adjacentTileIds": [9, 10, 12, 16, 17]
+        },
+        {
+          "tileId": 14,
+          "row": 3,
+          "col": 3,
+          "position": "fourth-row-right",
+          "adjacentVertexIds": [33, 34, 35, 43, 44, 41],
+          "adjacentEdgeIds": [43, 50, 59, 64, 61, 56],
+          "adjacentTileIds": [10, 13, 17]
+        },
+        {
+          "tileId": 15,
+          "row": 4,
+          "col": 0,
+          "position": "bottom-row-left",
+          "adjacentVertexIds": [38, 39, 40, 47, 48, 45],
+          "adjacentEdgeIds": [53, 65, 69, 71, 68, 58],
+          "adjacentTileIds": [11, 12, 18]
+        },
+        {
+          "tileId": 16,
+          "row": 4,
+          "col": 1,
+          "position": "bottom-row-middle-left",
+          "adjacentVertexIds": [40, 41, 42, 49, 50, 47],
+          "adjacentEdgeIds": [55, 66, 70, 72, 69, 60],
+          "adjacentTileIds": [12, 13, 15, 18]
+        },
+        {
+          "tileId": 17,
+          "row": 4,
+          "col": 2,
+          "position": "bottom-row-middle-right",
+          "adjacentVertexIds": [42, 43, 44, 51, 52, 49],
+          "adjacentEdgeIds": [57, 67, 71, 73, 70, 62],
+          "adjacentTileIds": [13, 14, 16, 18]
+        },
+        {
+          "tileId": 18,
+          "row": 5,
+          "col": 0,
+          "position": "bottom-row-center",
+          "adjacentVertexIds": [47, 48, 49, 50, 51, 52],
+          "adjacentEdgeIds": [68, 69, 70, 71, 72, 73],
+          "adjacentTileIds": [15, 16, 17]
+        }
+      ]
+    },
+    
+    "vertex_adjacency": {
+      "description": "כל קודקוד מוגדר עם הצלעות והאריחים הסמוכים לו",
+      "note": "זהו הייצוג הקריטי של הגרף לצורך אכיפת חוקי המשחק",
+      "vertices": [
+        {"vertexId": 0, "adjacentVertexIds": [1, 3, 8], "adjacentEdgeIds": [0, 2, 6], "adjacentTileIds": [0]},
+        {"vertexId": 1, "adjacentVertexIds": [0, 2], "adjacentEdgeIds": [0, 1], "adjacentTileIds": [0]},
+        {"vertexId": 2, "adjacentVertexIds": [1, 3], "adjacentEdgeIds": [1, 2], "adjacentTileIds": [0]},
+        {"vertexId": 3, "adjacentVertexIds": [0, 2, 4, 9], "adjacentEdgeIds": [2, 3, 7], "adjacentTileIds": [0, 1]},
+        {"vertexId": 4, "adjacentVertexIds": [3, 5], "adjacentEdgeIds": [3, 4], "adjacentTileIds": [1]},
+        {"vertexId": 5, "adjacentVertexIds": [4, 6, 11], "adjacentEdgeIds": [4, 5, 9], "adjacentTileIds": [1, 2]},
+        {"vertexId": 6, "adjacentVertexIds": [5, 7], "adjacentEdgeIds": [5, 11], "adjacentTileIds": [2]},
+        {"vertexId": 7, "adjacentVertexIds": [6, 13], "adjacentEdgeIds": [11, 13], "adjacentTileIds": [2]},
+        {"vertexId": 8, "adjacentVertexIds": [0, 9, 14], "adjacentEdgeIds": [6, 10, 15], "adjacentTileIds": [0, 3]},
+        {"vertexId": 9, "adjacentVertexIds": [3, 8, 10], "adjacentEdgeIds": [7, 10, 18], "adjacentTileIds": [0, 1, 3]},
+        {"vertexId": 10, "adjacentVertexIds": [9, 11, 16], "adjacentEdgeIds": [8, 12, 18], "adjacentTileIds": [1, 3, 4]},
+        {"vertexId": 11, "adjacentVertexIds": [5, 10, 12], "adjacentEdgeIds": [9, 13, 20], "adjacentTileIds": [1, 2, 4]},
+        {"vertexId": 12, "adjacentVertexIds": [11, 13, 18], "adjacentEdgeIds": [11, 14, 20], "adjacentTileIds": [2, 4, 5]},
+        {"vertexId": 13, "adjacentVertexIds": [7, 12, 14], "adjacentEdgeIds": [13, 14, 27], "adjacentTileIds": [2, 5, 6]},
+        {"vertexId": 14, "adjacentVertexIds": [8, 15, 17], "adjacentEdgeIds": [15, 19, 22], "adjacentTileIds": [3]},
+        {"vertexId": 15, "adjacentVertexIds": [14, 16], "adjacentEdgeIds": [19, 22], "adjacentTileIds": [3]},
+        {"vertexId": 16, "adjacentVertexIds": [10, 15, 18], "adjacentEdgeIds": [18, 21, 24], "adjacentTileIds": [3, 4]},
+        {"vertexId": 17, "adjacentVertexIds": [14, 24], "adjacentEdgeIds": [19, 36], "adjacentTileIds": [3, 7]},
+        {"vertexId": 18, "adjacentVertexIds": [12, 16, 19], "adjacentEdgeIds": [20, 24, 25], "adjacentTileIds": [4, 5]},
+        {"vertexId": 19, "adjacentVertexIds": [16, 18, 26], "adjacentEdgeIds": [21, 30, 34], "adjacentTileIds": [4, 7, 8]},
+        {"vertexId": 20, "adjacentVertexIds": [13, 18, 21], "adjacentEdgeIds": [23, 25, 26], "adjacentTileIds": [5, 6, 8]},
+        {"vertexId": 21, "adjacentVertexIds": [18, 20, 28], "adjacentEdgeIds": [25, 31, 35], "adjacentTileIds": [5, 8, 9]},
+        {"vertexId": 22, "adjacentVertexIds": [20, 23], "adjacentEdgeIds": [26, 28], "adjacentTileIds": [6, 9]},
+        {"vertexId": 23, "adjacentVertexIds": [13, 22, 24, 30], "adjacentEdgeIds": [27, 28, 29, 37], "adjacentTileIds": [6, 9, 10]},
+        {"vertexId": 24, "adjacentVertexIds": [17, 23, 25], "adjacentEdgeIds": [29, 33, 36], "adjacentTileIds": [7, 10]},
+        {"vertexId": 25, "adjacentVertexIds": [23, 24, 33], "adjacentEdgeIds": [33, 39, 43], "adjacentTileIds": [10]},
+        {"vertexId": 26, "adjacentVertexIds": [19, 27, 37], "adjacentEdgeIds": [34, 38, 40], "adjacentTileIds": [7, 8]},
+        {"vertexId": 27, "adjacentVertexIds": [19, 26, 28], "adjacentEdgeIds": [34, 36, 52], "adjacentTileIds": [7, 8, 11]},
+        {"vertexId": 28, "adjacentVertexIds": [21, 27, 29, 38], "adjacentEdgeIds": [35, 38, 41, 42], "adjacentTileIds": [8, 9, 11, 12]},
+        {"vertexId": 29, "adjacentVertexIds": [21, 28, 30], "adjacentEdgeIds": [35, 37, 54], "adjacentTileIds": [8, 9, 12]},
+        {"vertexId": 30, "adjacentVertexIds": [23, 29, 31], "adjacentEdgeIds": [37, 41, 43], "adjacentTileIds": [9, 10, 12, 13]},
+        {"vertexId": 31, "adjacentVertexIds": [29, 30, 39], "adjacentEdgeIds": [41, 54, 55], "adjacentTileIds": [9, 12, 13]},
+        {"vertexId": 32, "adjacentVertexIds": [30, 33], "adjacentEdgeIds": [43, 46], "adjacentTileIds": [10, 13]},
+        {"vertexId": 33, "adjacentVertexIds": [25, 32, 34, 41], "adjacentEdgeIds": [39, 43, 46, 56], "adjacentTileIds": [10, 13, 14]},
+        {"vertexId": 34, "adjacentVertexIds": [33, 35], "adjacentEdgeIds": [43, 50], "adjacentTileIds": [14]},
+        {"vertexId": 35, "adjacentVertexIds": [33, 34, 44], "adjacentEdgeIds": [50, 59, 61], "adjacentTileIds": [14]},
+        {"vertexId": 36, "adjacentVertexIds": [24, 27], "adjacentEdgeIds": [36, 40], "adjacentTileIds": [7]},
+        {"vertexId": 37, "adjacentVertexIds": [26, 28, 38], "adjacentEdgeIds": [40, 47, 52], "adjacentTileIds": [8, 11]},
+        {"vertexId": 38, "adjacentVertexIds": [28, 37, 45], "adjacentEdgeIds": [42, 47, 53], "adjacentTileIds": [11, 15]},
+        {"vertexId": 39, "adjacentVertexIds": [31, 40], "adjacentEdgeIds": [48, 55], "adjacentTileIds": [12, 15]},
+        {"vertexId": 40, "adjacentVertexIds": [31, 39, 47], "adjacentEdgeIds": [54, 55, 60], "adjacentTileIds": [12, 15, 16]},
+        {"vertexId": 41, "adjacentVertexIds": [33, 42], "adjacentEdgeIds": [49, 57], "adjacentTileIds": [13, 14]},
+        {"vertexId": 42, "adjacentVertexIds": [33, 41, 49], "adjacentEdgeIds": [56, 57, 62], "adjacentTileIds": [13, 14, 16, 17]},
+        {"vertexId": 43, "adjacentVertexIds": [35, 41, 44], "adjacentEdgeIds": [59, 61, 64], "adjacentTileIds": [14]},
+        {"vertexId": 44, "adjacentVertexIds": [35, 43, 52], "adjacentEdgeIds": [59, 64, 67], "adjacentTileIds": [14, 17]},
+        {"vertexId": 45, "adjacentVertexIds": [38, 48], "adjacentEdgeIds": [53, 58], "adjacentTileIds": [11, 15]},
+        {"vertexId": 46, "adjacentVertexIds": [38, 40, 47], "adjacentEdgeIds": [53, 58, 68], "adjacentTileIds": [15]},
+        {"vertexId": 47, "adjacentVertexIds": [40, 46, 48], "adjacentEdgeIds": [58, 60, 68, 69], "adjacentTileIds": [15, 16, 18]},
+        {"vertexId": 48, "adjacentVertexIds": [45, 46, 50], "adjacentEdgeIds": [58, 65, 68], "adjacentTileIds": [15, 18]},
+        {"vertexId": 49, "adjacentVertexIds": [42, 50], "adjacentEdgeIds": [62, 66], "adjacentTileIds": [16, 17, 18]},
+        {"vertexId": 50, "adjacentVertexIds": [47, 48, 49], "adjacentEdgeIds": [66, 68, 69, 70], "adjacentTileIds": [16, 18]},
+        {"vertexId": 51, "adjacentVertexIds": [44, 49, 52], "adjacentEdgeIds": [67, 70, 71], "adjacentTileIds": [17, 18]},
+        {"vertexId": 52, "adjacentVertexIds": [44, 51], "adjacentEdgeIds": [67, 71], "adjacentTileIds": [17, 18]},
+        {"vertexId": 53, "adjacentVertexIds": [49, 50, 51], "adjacentEdgeIds": [70, 72, 73], "adjacentTileIds": [18]}
+      ]
+    },
+    
+    "edge_adjacency": {
+      "description": "כל צלע מוגדרת על ידי שני הקודקודים שהיא מחברת והאריחים הסמוכים",
+      "edges": [
+        {"edgeId": 0, "vertexIds": [0, 1], "adjacentTileIds": [0], "adjacentEdgeIds": [1, 2, 6]},
+        {"edgeId": 1, "vertexIds": [1, 2], "adjacentTileIds": [0], "adjacentEdgeIds": [0, 2]},
+        {"edgeId": 2, "vertexIds": [2, 3], "adjacentTileIds": [0, 1], "adjacentEdgeIds": [0, 1, 3, 7]},
+        {"edgeId": 3, "vertexIds": [3, 4], "adjacentTileIds": [1], "adjacentEdgeIds": [2, 4, 7]},
+        {"edgeId": 4, "vertexIds": [4, 5], "adjacentTileIds": [1, 2], "adjacentEdgeIds": [3, 5, 9]},
+        {"edgeId": 5, "vertexIds": [5, 6], "adjacentTileIds": [2], "adjacentEdgeIds": [4, 9, 11]},
+        {"edgeId": 6, "vertexIds": [0, 8], "adjacentTileIds": [0, 3], "adjacentEdgeIds": [0, 10, 15]},
+        {"edgeId": 7, "vertexIds": [3, 9], "adjacentTileIds": [0, 1, 3], "adjacentEdgeIds": [2, 3, 10, 18]},
+        {"edgeId": 8, "vertexIds": [10, 11], "adjacentTileIds": [1, 4], "adjacentEdgeIds": [9, 12, 18, 20]},
+        {"edgeId": 9, "vertexIds": [5, 11], "adjacentTileIds": [1, 2, 4], "adjacentEdgeIds": [4, 5, 8, 13, 20]},
+        {"edgeId": 10, "vertexIds": [8, 9], "adjacentTileIds": [0, 3], "adjacentEdgeIds": [6, 7, 15, 18]},
+        {"edgeId": 11, "vertexIds": [6, 12], "adjacentTileIds": [2, 4, 5], "adjacentEdgeIds": [5, 13, 14]},
+        {"edgeId": 12, "vertexIds": [10, 16], "adjacentTileIds": [3, 4], "adjacentEdgeIds": [8, 18, 24]},
+        {"edgeId": 13, "vertexIds": [7, 13], "adjacentTileIds": [2, 5, 6], "adjacentEdgeIds": [11, 14, 27]},
+        {"edgeId": 14, "vertexIds": [12, 13], "adjacentTileIds": [2, 5], "adjacentEdgeIds": [11, 13, 20, 27]},
+        {"edgeId": 15, "vertexIds": [8, 14], "adjacentTileIds": [3], "adjacentEdgeIds": [6, 10, 19, 22]},
+        {"edgeId": 16, "vertexIds": [10, 11], "adjacentTileIds": [4], "adjacentEdgeIds": [8, 20, 21]},
+        {"edgeId": 17, "vertexIds": [12, 13], "adjacentTileIds": [5], "adjacentEdgeIds": [14, 23]},
+        {"edgeId": 18, "vertexIds": [9, 16], "adjacentTileIds": [3, 4], "adjacentEdgeIds": [7, 10, 12, 21, 22, 24]},
+        {"edgeId": 19, "vertexIds": [14, 17], "adjacentTileIds": [3, 7], "adjacentEdgeIds": [15, 22, 36]},
+        {"edgeId": 20, "vertexIds": [11, 18], "adjacentTileIds": [4, 5], "adjacentEdgeIds": [8, 9, 14, 24, 25]},
+        {"edgeId": 21, "vertexIds": [16, 19], "adjacentTileIds": [4, 7, 8], "adjacentEdgeIds": [18, 24, 30, 34]},
+        {"edgeId": 22, "vertexIds": [14, 15], "adjacentTileIds": [3], "adjacentEdgeIds": [15, 19]},
+        {"edgeId": 23, "vertexIds": [13, 20], "adjacentTileIds": [5, 6, 8], "adjacentEdgeIds": [17, 25, 26, 27]},
+        {"edgeId": 24, "vertexIds": [16, 18], "adjacentTileIds": [4], "adjacentEdgeIds": [12, 18, 20, 21]},
+        {"edgeId": 25, "vertexIds": [18, 21], "adjacentTileIds": [5, 8, 9], "adjacentEdgeIds": [20, 23, 26, 31, 35]},
+        {"edgeId": 26, "vertexIds": [20, 22], "adjacentTileIds": [6, 9], "adjacentEdgeIds": [23, 28]},
+        {"edgeId": 27, "vertexIds": [13, 23], "adjacentTileIds": [6], "adjacentEdgeIds": [13, 23, 28, 29]},
+        {"edgeId": 28, "vertexIds": [22, 23], "adjacentTileIds": [6, 9, 10], "adjacentEdgeIds": [26, 27, 29, 37]},
+        {"edgeId": 29, "vertexIds": [23, 24], "adjacentTileIds": [10], "adjacentEdgeIds": [27, 28, 33, 36]},
+        {"edgeId": 30, "vertexIds": [19, 26], "adjacentTileIds": [7, 8], "adjacentEdgeIds": [21, 34, 40]},
+        {"edgeId": 31, "vertexIds": [21, 28], "adjacentTileIds": [8, 9, 11, 12], "adjacentEdgeIds": [25, 35, 38, 42]},
+        {"edgeId": 32, "vertexIds": [21, 22], "adjacentTileIds": [9], "adjacentEdgeIds": [25, 26, 37]},
+        {"edgeId": 33, "vertexIds": [24, 25], "adjacentTileIds": [10], "adjacentEdgeIds": [29, 39, 43]},
+        {"edgeId": 34, "vertexIds": [19, 27], "adjacentTileIds": [7, 8], "adjacentEdgeIds": [21, 30, 36, 38, 40, 52]},
+        {"edgeId": 35, "vertexIds": [21, 29], "adjacentTileIds": [8, 9, 12], "adjacentEdgeIds": [25, 31, 37, 54]},
+        {"edgeId": 36, "vertexIds": [17, 27], "adjacentTileIds": [7], "adjacentEdgeIds": [19, 29, 34, 40]},
+        {"edgeId": 37, "vertexIds": [23, 30], "adjacentTileIds": [9, 10, 12, 13], "adjacentEdgeIds": [28, 32, 35, 41, 43]},
+        {"edgeId": 38, "vertexIds": [26, 28], "adjacentTileIds": [8, 11], "adjacentEdgeIds": [31, 34, 40, 42, 47, 52]},
+        {"edgeId": 39, "vertexIds": [25, 33], "adjacentTileIds": [10, 14], "adjacentEdgeIds": [33, 43, 46]},
+        {"edgeId": 40, "vertexIds": [27, 36], "adjacentTileIds": [7], "adjacentEdgeIds": [30, 34, 36, 38, 52]},
+        {"edgeId": 41, "vertexIds": [29, 31], "adjacentTileIds": [9, 12, 13], "adjacentEdgeIds": [31, 35, 37, 54, 55]},
+        {"edgeId": 42, "vertexIds": [28, 38], "adjacentTileIds": [8, 11, 15], "adjacentEdgeIds": [31, 38, 47, 53]},
+        {"edgeId": 43, "vertexIds": [32, 33], "adjacentTileIds": [10, 13, 14], "adjacentEdgeIds": [37, 39, 46, 56]},
+        {"edgeId": 44, "vertexIds": [23, 30], "adjacentTileIds": [9], "adjacentEdgeIds": [28, 37, 41]},
+        {"edgeId": 45, "vertexIds": [24, 25], "adjacentTileIds": [7, 10], "adjacentEdgeIds": [29, 33]},
+        {"edgeId": 46, "vertexIds": [30, 32], "adjacentTileIds": [10, 13], "adjacentEdgeIds": [37, 39, 43]},
+        {"edgeId": 47, "vertexIds": [37, 38], "adjacentTileIds": [8, 11], "adjacentEdgeIds": [38, 42, 52, 53]},
+        {"edgeId": 48, "vertexIds": [31, 39], "adjacentTileIds": [12, 15], "adjacentEdgeIds": [41, 55]},
+        {"edgeId": 49, "vertexIds": [33, 41], "adjacentTileIds": [13, 14], "adjacentEdgeIds": [43, 57]},
+        {"edgeId": 50, "vertexIds": [33, 34], "adjacentTileIds": [14], "adjacentEdgeIds": [43, 59, 61]},
+        {"edgeId": 51, "vertexIds": [27, 28], "adjacentTileIds": [8], "adjacentEdgeIds": [34, 38]},
+        {"edgeId": 52, "vertexIds": [27, 37], "adjacentTileIds": [7, 8, 11], "adjacentEdgeIds": [34, 38, 40, 47]},
+        {"edgeId": 53, "vertexIds": [38, 45], "adjacentTileIds": [11, 15], "adjacentEdgeIds": [42, 47, 58, 68]},
+        {"edgeId": 54, "vertexIds": [29, 40], "adjacentTileIds": [12], "adjacentEdgeIds": [35, 41, 48, 55, 60]},
+        {"edgeId": 55, "vertexIds": [31, 40], "adjacentTileIds": [12, 15, 16], "adjacentEdgeIds": [41, 48, 54, 60]},
+        {"edgeId": 56, "vertexIds": [33, 42], "adjacentTileIds": [13, 14, 16, 17], "adjacentEdgeIds": [43, 49, 57, 62]},
+        {"edgeId": 57, "vertexIds": [41, 42], "adjacentTileIds": [13, 14], "adjacentEdgeIds": [49, 56, 62]},
+        {"edgeId": 58, "vertexIds": [45, 46], "adjacentTileIds": [11, 15], "adjacentEdgeIds": [53, 68]},
+        {"edgeId": 59, "vertexIds": [35, 43], "adjacentTileIds": [14], "adjacentEdgeIds": [50, 61, 64]},
+        {"edgeId": 60, "vertexIds": [40, 47], "adjacentTileIds": [12, 15, 16, 18], "adjacentEdgeIds": [54, 55, 68, 69]},
+        {"edgeId": 61, "vertexIds": [34, 43], "adjacentTileIds": [14], "adjacentEdgeIds": [50, 59, 64]},
+        {"edgeId": 62, "vertexIds": [42, 49], "adjacentTileIds": [16, 17, 18], "adjacentEdgeIds": [56, 57, 66, 70]},
+        {"edgeId": 63, "vertexIds": [39, 40], "adjacentTileIds": [15], "adjacentEdgeIds": [48, 55]},
+        {"edgeId": 64, "vertexIds": [43, 44], "adjacentTileIds": [14, 17], "adjacentEdgeIds": [59, 61, 67]},
+        {"edgeId": 65, "vertexIds": [45, 48], "adjacentTileIds": [15, 18], "adjacentEdgeIds": [58, 68]},
+        {"edgeId": 66, "vertexIds": [49, 50], "adjacentTileIds": [16, 18], "adjacentEdgeIds": [62, 68, 69, 70]},
+        {"edgeId": 67, "vertexIds": [44, 51], "adjacentTileIds": [17, 18], "adjacentEdgeIds": [64, 70, 71]},
+        {"edgeId": 68, "vertexIds": [46, 47], "adjacentTileIds": [15, 16, 18], "adjacentEdgeIds": [53, 58, 60, 65, 66, 69]},
+        {"edgeId": 69, "vertexIds": [47, 50], "adjacentTileIds": [15, 16, 18], "adjacentEdgeIds": [60, 66, 68, 70]},
+        {"edgeId": 70, "vertexIds": [49, 51], "adjacentTileIds": [16, 17, 18], "adjacentEdgeIds": [62, 66, 67, 69, 71]},
+        {"edgeId": 71, "vertexIds": [51, 52], "adjacentTileIds": [17, 18], "adjacentEdgeIds": [67, 70]}
+      ]
+    }
+  },
+  
+  "notes": {
+    "design": "מבנה זה מייצג את הלוח הסטטי הסטנדרטי של קטאן",
+    "randomization": "BoardGenerator ישתמש במבנה זה כבסיס ויערבב אריחים ומספרים",
+    "graph_algorithms": "HexGraph ישתמש ב-adjacency lists לאלגוריתמים של BFS/DFS (דרך ארוכה, חוק מרחק)",
+    "critical": "קשרי השכנות הם קריטיים לאכיפת חוקי המשחק ואסור לשנות אותם"
+  }
+}

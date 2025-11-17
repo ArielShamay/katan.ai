@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "מחירון בניה למשחק קטאן - עלויות משאבים לכל סוג בנייה",
+  "costs": {
+    "ROAD": {
+      "BRICK": 1,
+      "LUMBER": 1
+    },
+    "SETTLEMENT": {
+      "BRICK": 1,
+      "LUMBER": 1,
+      "WOOL": 1,
+      "GRAIN": 1
+    },
+    "CITY": {
+      "ORE": 3,
+      "GRAIN": 2
+    },
+    "DEVELOPMENT_CARD": {
+      "ORE": 1,
+      "WOOL": 1,
+      "GRAIN": 1
+    }
+  },
+  "notes": {
+    "ROAD": "כביש - 1 לבנה + 1 עץ",
+    "SETTLEMENT": "כפר - 1 לבנה + 1 עץ + 1 צמר + 1 חיטה",
+    "CITY": "עיר (שדרוג מכפר) - 3 עפרות + 2 חיטה",
+    "DEVELOPMENT_CARD": "קלף התפתחות - 1 עפרות + 1 צמר + 1 חיטה"
+  }
+}
