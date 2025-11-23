@@ -1,10 +1,12 @@
 /**
- * GameBoard Component - Catan Board Reconstruction Protocol
+ * GameBoard Component - FINAL RECONSTRUCTION
  * 
- * Architecture: "Derived Geometry" Pattern
- * - Backend sends: Tiles with (q, r) + adjacentVertexIds
- * - Frontend: Uses honeycomb-grid to derive pixel positions
- * - Synchronization: 1:1 mapping with rotation offset correction
+ * Master Vertex Map Algorithm:
+ * 1. honeycomb-grid (pointy orientation, fixed HEX_SIZE)
+ * 2. Rotation Offset: Server[i] → Library[(i + 4) % 6]
+ *    - Server: Top=0, TopRight=1, BottomRight=2, Bottom=3, BottomLeft=4, TopLeft=5
+ *    - Library: TopRight=0, Right=1, BottomRight=2, BottomLeft=3, Left=4, TopLeft=5
+ * 3. Layer Order: Edges → Tiles → Numbers → Vertices
  */
 
 import React, { useMemo } from 'react';
@@ -19,7 +21,7 @@ interface GameBoardProps {
   buildMode: 'ROAD' | 'SETTLEMENT' | 'CITY' | 'DEVELOPMENT_CARD' | null;
 }
 
-// ===== PHASE 1: STANDARDIZATION =====
+// ===== CONFIGURATION =====
 const HEX_SIZE = 50;
 const Hex = defineHex({ dimensions: HEX_SIZE, orientation: Orientation.POINTY });
 
@@ -35,56 +37,54 @@ const RESOURCE_COLORS: Record<ResourceType, string> = {
 
 const GameBoard: React.FC<GameBoardProps> = ({ gameState, onVertexClick, onEdgeClick, buildMode }) => {
   
-  // ===== PHASE 2: THE MAPPING ALGORITHM =====
+  // ===== MASTER VERTEX MAP (Source of Truth) =====
   const { hexGrid, vertexPositionMap } = useMemo(() => {
     const hexMap = new Map<number, typeof Hex.prototype>();
     const vertexMap = new Map<number, { x: number; y: number }>();
     
-    console.log('🎯 GameBoard: Building grid from', gameState.tiles.length, 'tiles');
-    console.log('📊 Total vertices in gameState:', gameState.vertices.length);
+    console.log('🎯 RECONSTRUCTION: Building from', gameState.tiles.length, 'tiles');
     
-    // Iterate ALL tiles to capture ALL vertices
+    // Process ALL tiles (no filtering)
     gameState.tiles.forEach((tile) => {
-      // Create hex from Axial coordinates
+      // Create hex instance from axial coordinates
       const hex = new Hex({ q: tile.q, r: tile.r });
       (hex as any).tileData = tile;
       hexMap.set(tile.id, hex);
       
-      // CRITICAL: Map Server IDs to Library Corners with Rotation Offset
-      const corners = hex.corners; // [0]=E, [1]=SE, [2]=SW, [3]=W, [4]=NW, [5]=NE
-      const serverIds = tile.adjacentVertexIds; // Server order: [0]=N, [1]=NE, [2]=SE, [3]=S, [4]=SW, [5]=NW
+      // Get the 6 corners from honeycomb-grid
+      const corners = hex.corners; // Library order: [0]=TopRight, [1]=Right, [2]=BottomRight, [3]=BottomLeft, [4]=Left, [5]=TopLeft
+      const serverIds = tile.adjacentVertexIds; // Server order: [0]=Top, [1]=TopRight, [2]=BottomRight, [3]=Bottom, [4]=BottomLeft, [5]=TopLeft
       
+      // THE GOLDEN FIX: Rotation Offset
       serverIds.forEach((vertexId, serverIndex) => {
-        // ROTATION OFFSET: (serverIndex + 5) % 6
-        // This shifts the mapping back by 1 position to align Server North with Library coordinates
-        const libraryIndex = (serverIndex + 5) % 6;
-        const point = corners[libraryIndex];
+        // Primary offset: (serverIndex + 4) % 6
+        // This aligns Server's "Top" (0) with Library's "TopLeft" (5)
+        const libraryIndex = (serverIndex + 4) % 6;
+        const corner = corners[libraryIndex];
         
-        // Store in map - use first occurrence only (no averaging)
-        // Averaging can cause misalignment with tile corners
+        // Store first occurrence only (no averaging to prevent drift)
         if (!vertexMap.has(vertexId)) {
           vertexMap.set(vertexId, {
-            x: point.x,
-            y: point.y
+            x: corner.x,
+            y: corner.y
           });
         }
       });
     });
     
-    console.log('✅ GameBoard: Grid complete -', hexMap.size, 'hexes,', vertexMap.size, 'unique vertices');
-    console.log('🔍 Vertices mapped vs expected:', vertexMap.size, '/', gameState.vertices.length);
+    console.log('✅ Mapped:', vertexMap.size, '/', gameState.vertices.length, 'vertices');
     
-    // Check for missing vertices
-    const missingVertices = gameState.vertices.filter(v => !vertexMap.has(v.id));
-    if (missingVertices.length > 0) {
-      console.warn('⚠️ Missing vertices:', missingVertices.map(v => v.id));
+    // Debug missing vertices
+    const missing = gameState.vertices.filter(v => !vertexMap.has(v.id));
+    if (missing.length > 0) {
+      console.warn('⚠️ MISSING VERTICES:', missing.map(v => v.id).join(', '));
     }
     
     return {
       hexGrid: Array.from(hexMap.values()),
       vertexPositionMap: vertexMap
     };
-  }, [gameState.tiles]);
+  }, [gameState.tiles, gameState.vertices.length]);
   
   // ===== ViewBox Calculation =====
   const viewBox = useMemo(() => {
@@ -105,14 +105,52 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onVertexClick, onEdgeC
     return `${minX} ${minY} ${maxX - minX} ${maxY - minY}`;
   }, [hexGrid]);
   
-  // ===== PHASE 3: SVG RENDERING (LAYERED ARCHITECTURE) =====
+  // ===== SVG RENDERING: STRICT LAYER ORDER =====
   return (
     <svg 
       viewBox={viewBox} 
       style={{ width: '100%', height: 'auto', maxHeight: '90vh' }}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Layer 1: TILES ONLY (Background Polygons) */}
+      {/* LAYER 1: EDGES (Background - must be first to appear behind tiles) */}
+      <g id="edges-layer">
+        {gameState.edges.map(edge => {
+          const v1 = vertexPositionMap.get(edge.vertexIds[0]);
+          const v2 = vertexPositionMap.get(edge.vertexIds[1]);
+          
+          // Only render if BOTH vertices exist in map
+          if (!v1 || !v2) return null;
+          
+          const isBuilt = edge.ownerId !== null;
+          const ownerPlayer = isBuilt ? gameState.players.find(p => p.id === edge.ownerId) : null;
+          const isHighlighted = buildMode === 'ROAD' && !isBuilt;
+          
+          return (
+            <g key={`edge-${edge.id}`}>
+              {/* Clickable area (transparent) */}
+              <line
+                x1={v1.x} y1={v1.y} x2={v2.x} y2={v2.y}
+                stroke="transparent"
+                strokeWidth="14"
+                onClick={() => onEdgeClick(edge.id)}
+                style={{ cursor: isBuilt ? 'default' : 'pointer' }}
+              />
+              {/* Visual line */}
+              <line
+                x1={v1.x} y1={v1.y} x2={v2.x} y2={v2.y}
+                stroke={isBuilt ? (ownerPlayer?.color || '#999') : isHighlighted ? '#43A047' : '#999'}
+                strokeWidth={isBuilt ? 6 : isHighlighted ? 4 : 2}
+                strokeDasharray={!isBuilt && isHighlighted ? '5,5' : 'none'}
+                opacity={isBuilt ? 1 : isHighlighted ? 0.8 : 0.3}
+                strokeLinecap="round"
+                pointerEvents="none"
+              />
+            </g>
+          );
+        })}
+      </g>
+      
+      {/* LAYER 2: TILES (Middle layer - hexagon polygons) */}
       <g id="tiles-layer">
         {hexGrid.map((hex) => {
           const tile = (hex as any).tileData as typeof gameState.tiles[0];
@@ -136,22 +174,22 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onVertexClick, onEdgeC
         })}
       </g>
       
-      {/* Layer 2: NUMBERS/TOKENS (Always on top of tiles) */}
-      <g id="numbers-layer">
+      {/* LAYER 3: NUMBERS & TOKENS (Top layer - must be above tiles) */}
+      <g id="numbers-layer" pointerEvents="none">
         {hexGrid.map((hex) => {
           const tile = (hex as any).tileData as typeof gameState.tiles[0];
           if (!tile) return null;
           
-          // Get center coordinates - hex.center is a Point object
-          const centerPoint = hex.center;
-          const cx = centerPoint.x;
-          const cy = centerPoint.y;
+          // Get exact center coordinates
+          const center = hex.center;
+          const cx = center.x;
+          const cy = center.y;
           const isRobber = gameState.robberTileId === tile.id;
           const isDesert = tile.resourceType === ResourceType.DESERT;
           
           return (
             <g key={`number-${tile.id}`}>
-              {/* Desert Token (no dice number) */}
+              {/* Desert Token (dash symbol) */}
               {isDesert && !isRobber && (
                 <>
                   <circle 
@@ -176,10 +214,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onVertexClick, onEdgeC
                 </>
               )}
               
-              {/* Dice Number Circle and Text (for non-desert tiles) */}
+              {/* Dice Number (non-desert tiles) */}
               {tile.diceNumber !== null && !isDesert && (
                 <>
-                  {/* White circle background */}
                   <circle 
                     cx={cx} 
                     cy={cy} 
@@ -188,7 +225,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onVertexClick, onEdgeC
                     stroke="#333" 
                     strokeWidth="2.5" 
                   />
-                  {/* Dice number */}
+                  {/* Number - CENTERED with textAnchor + dominantBaseline */}
                   <text
                     x={cx}
                     y={cy - 2}
@@ -222,47 +259,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onVertexClick, onEdgeC
                   textAnchor="middle" 
                   dominantBaseline="central" 
                   fontSize="35"
+                  style={{ pointerEvents: 'none' }}
                 >
                   🦹
                 </text>
               )}
-            </g>
-          );
-        })}
-      </g>
-      
-      {/* Layer 3: EDGES (Roads) */}
-      <g id="edges-layer">
-        {gameState.edges.map(edge => {
-          const v1Pos = vertexPositionMap.get(edge.vertexIds[0]);
-          const v2Pos = vertexPositionMap.get(edge.vertexIds[1]);
-          
-          if (!v1Pos || !v2Pos) return null;
-          
-          const isBuilt = edge.ownerId !== null;
-          const ownerPlayer = isBuilt ? gameState.players.find(p => p.id === edge.ownerId) : null;
-          const isHighlighted = buildMode === 'ROAD' && !isBuilt;
-          
-          return (
-            <g key={`edge-${edge.id}`}>
-              {/* Clickable area */}
-              <line
-                x1={v1Pos.x} y1={v1Pos.y} x2={v2Pos.x} y2={v2Pos.y}
-                stroke="transparent"
-                strokeWidth="14"
-                onClick={() => onEdgeClick(edge.id)}
-                style={{ cursor: isBuilt ? 'default' : 'pointer' }}
-              />
-              {/* Visual line */}
-              <line
-                x1={v1Pos.x} y1={v1Pos.y} x2={v2Pos.x} y2={v2Pos.y}
-                stroke={isBuilt ? (ownerPlayer?.color || '#999') : isHighlighted ? '#43A047' : '#999'}
-                strokeWidth={isBuilt ? 6 : isHighlighted ? 4 : 2}
-                strokeDasharray={!isBuilt && isHighlighted ? '5,5' : 'none'}
-                opacity={isBuilt ? 1 : isHighlighted ? 0.8 : 0.3}
-                strokeLinecap="round"
-                pointerEvents="none"
-              />
             </g>
           );
         })}
