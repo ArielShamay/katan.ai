@@ -17,13 +17,13 @@ const VertexPoint: React.FC<VertexPointProps> = ({ vertex, x, y, color, onClick,
   const isCity = vertex.buildingType === BuildingType.CITY;
 
   // גודל הנקודה
-  let radius = 8;
-  if (isSettlement) radius = 10;
-  if (isCity) radius = 14;
-  if (isHighlighted && !isOccupied) radius = 12;
+  let radius = 10; // הגדלה מ-8
+  if (isSettlement) radius = 12;
+  if (isCity) radius = 16;
+  if (isHighlighted && !isOccupied) radius = 14;
 
   // צבע מילוי
-  let fill = 'rgba(255, 255, 255, 0.8)';
+  let fill = 'white'; // לבן מלא
   let stroke = '#333';
   let strokeWidth = 2;
 
@@ -46,6 +46,17 @@ const VertexPoint: React.FC<VertexPointProps> = ({ vertex, x, y, color, onClick,
 
   return (
     <g className="vertex-group">
+      {/* צל לכפרים/ערים */}
+      {isOccupied && color && (
+        <circle
+          cx={x}
+          cy={y}
+          r={radius + 3}
+          fill="rgba(0, 0, 0, 0.3)"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
+      
       <circle
         className={`vertex ${isOccupied ? 'occupied' : ''} ${isSettlement ? 'settlement' : ''} ${isCity ? 'city' : ''} ${isHighlighted ? 'highlighted' : ''}`}
         cx={x}

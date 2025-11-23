@@ -39,7 +39,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({ player, isActive }) => {
         <div className="player-header">
           <div 
             className="player-color-indicator" 
-            style={{ backgroundColor: player.color }}
+            style={{ backgroundColor: player.color, boxShadow: `0 2px 8px rgba(0, 0, 0, 0.2), 0 0 20px ${player.color}` }}
           />
           <div className="player-info">
             <h3>{player.name}</h3>

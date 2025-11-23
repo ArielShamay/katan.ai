@@ -3,7 +3,7 @@ import GameBoard from './components/GameBoard';
 import PlayerPanel from './components/PlayerPanel';
 import BuildMenu from './components/BuildMenu';
 import { IGameState } from '../src/models/GameState';
-import { ActionType, ResourceType, BuildingType, TurnPhase } from '../src/models/Enums';
+import { ActionType, ResourceType, BuildingType, TurnPhase, GamePhase } from '../src/models/Enums';
 import { createRealGameState } from './utils/gameStateFactory';
 import costsData from '../config/costs.json';
 
@@ -13,6 +13,8 @@ const App: React.FC = () => {
   const [gameState, setGameState] = useState<IGameState | null>(null);
   const [buildMenuOpen, setBuildMenuOpen] = useState(false);
   const [buildMode, setBuildMode] = useState<BuildMode>(null);
+  const [showDiceResult, setShowDiceResult] = useState(false);
+  const [lastDiceResult, setLastDiceResult] = useState<number | null>(null);
 
   useEffect(() => {
     // אתחול משחק עם 4 שחקנים
@@ -30,6 +32,42 @@ const App: React.FC = () => {
     initGame();
   }, []);
 
+  const distributeResources = (roll: number, currentGameState: IGameState): IGameState => {
+    if (roll === 7) return currentGameState; // Robber logic not implemented yet
+
+    const newPlayers = [...currentGameState.players];
+    
+    currentGameState.tiles.forEach(tile => {
+      if (tile.diceNumber === roll && !tile.isRobberPresent) {
+        tile.adjacentVertexIds.forEach(vertexId => {
+          const vertex = currentGameState.vertices.find(v => v.id === vertexId);
+          if (vertex && vertex.ownerId) {
+            const playerIndex = newPlayers.findIndex(p => p.id === vertex.ownerId);
+            if (playerIndex !== -1) {
+              const resourceAmount = vertex.buildingType === BuildingType.CITY ? 2 : 1;
+              const resourceType = tile.resourceType;
+              
+              if (resourceType !== ResourceType.DESERT) {
+                newPlayers[playerIndex] = {
+                  ...newPlayers[playerIndex],
+                  resources: {
+                    ...newPlayers[playerIndex].resources,
+                    [resourceType]: newPlayers[playerIndex].resources[resourceType] + resourceAmount
+                  }
+                };
+              }
+            }
+          }
+        });
+      }
+    });
+
+    return {
+      ...currentGameState,
+      players: newPlayers
+    };
+  };
+
   const handleVertexClick = (vertexId: number) => {
     if (!gameState) return;
 
@@ -37,6 +75,55 @@ const App: React.FC = () => {
       const currentPlayer = gameState.players[gameState.currentPlayerIndex];
       const vertex = gameState.vertices[vertexId];
       
+      // טיפול בשלב ההכנה (SETUP)
+      if (gameState.gamePhase === GamePhase.SETUP) {
+        if (vertex.ownerId) {
+          alert('מיקום תפוס!');
+          return;
+        }
+        
+        // הצבת כפר חינם
+        const newVertices = gameState.vertices.map(v =>
+          v.id === vertexId
+            ? { ...v, ownerId: currentPlayer.id, buildingType: BuildingType.SETTLEMENT }
+            : v
+        );
+
+        let newPlayers = [...gameState.players];
+        const playerIndex = newPlayers.findIndex(p => p.id === currentPlayer.id);
+        
+        newPlayers[playerIndex] = {
+          ...currentPlayer,
+          settlementsRemaining: currentPlayer.settlementsRemaining - 1,
+          victoryPoints: currentPlayer.victoryPoints + 1
+        };
+
+        // אם זה הכפר השני (נשאר 3), קבלת משאבים
+        if (newPlayers[playerIndex].settlementsRemaining === 3) {
+           // חלוקת משאבים מהאריחים הסמוכים
+           vertex.adjacentTileIds.forEach(tileId => {
+             const tile = gameState.tiles.find(t => t.id === tileId);
+             if (tile && tile.resourceType !== ResourceType.DESERT) {
+               const currentAmount = newPlayers[playerIndex].resources[tile.resourceType];
+               newPlayers[playerIndex] = {
+                 ...newPlayers[playerIndex],
+                 resources: {
+                   ...newPlayers[playerIndex].resources,
+                   [tile.resourceType]: currentAmount + 1
+                 }
+               };
+             }
+           });
+        }
+
+        setGameState({
+          ...gameState,
+          vertices: newVertices,
+          players: newPlayers,
+        });
+        return;
+      }
+
       // במצב בנייה של כפר או עיר
       if (buildMode === 'SETTLEMENT' || buildMode === 'CITY') {
         if (vertex.ownerId && buildMode === 'SETTLEMENT') {
@@ -184,15 +271,26 @@ const App: React.FC = () => {
       const die2 = Math.floor(Math.random() * 6) + 1;
       const total = die1 + die2;
 
-      setGameState({
+      let newState: IGameState = {
         ...gameState,
         diceResult: total,
         turnPhase: TurnPhase.MAIN_ACTIONS,
-      });
+      };
+
+      // חלוקת משאבים
+      newState = distributeResources(total, newState);
+
+      setGameState(newState);
+      setShowDiceResult(true);
+      setLastDiceResult(total);
     } catch (error) {
       console.error('Failed to roll dice:', error);
       alert((error as Error).message);
     }
+  };
+
+  const handleCloseDiceResult = () => {
+    setShowDiceResult(false);
   };
 
   const handleEndTurn = () => {
@@ -210,6 +308,8 @@ const App: React.FC = () => {
       
       // ביטול מצב בנייה אם קיים
       setBuildMode(null);
+      setShowDiceResult(false);
+      setLastDiceResult(null);
     } catch (error) {
       console.error('Failed to end turn:', error);
       alert((error as Error).message);
@@ -314,13 +414,22 @@ const App: React.FC = () => {
           buildMode={buildMode}
         />
 
-        {gameState.diceResult && (
-          <div className="dice-result">
+        {/* באנר תוצאת קוביות גדול */}
+        {showDiceResult && gameState.diceResult && (
+          <div className="dice-result" onClick={handleCloseDiceResult}>
             <div className="dice-numbers">
               <div className="die">{Math.floor(gameState.diceResult / 2)}</div>
               <div className="die">{Math.ceil(gameState.diceResult / 2)}</div>
             </div>
             <div className="total">סה"כ: {gameState.diceResult}</div>
+            <div className="click-to-close">לחץ לסגירה</div>
+          </div>
+        )}
+
+        {/* תצוגה קטנה של תוצאה קודמת */}
+        {!showDiceResult && lastDiceResult && (
+          <div className="last-dice-small">
+            🎲 {lastDiceResult}
           </div>
         )}
 

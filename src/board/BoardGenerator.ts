@@ -151,6 +151,8 @@ export class BoardGenerator {
 
       const tile: ITile = {
         id: tileId,
+        q: tileData.q,
+        r: tileData.r,
         resourceType,
         diceNumber,
         probability,

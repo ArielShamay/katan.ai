@@ -14,32 +14,57 @@ import {
 } from '../../src/models/Enums';
 import boardConfig from '../../config/board_static.json';
 
-// מבנה הלוח הפיזי - 19 אריחים במבנה משושה
+const HEX_SIZE = 85;
+const HEX_HEIGHT = HEX_SIZE * 2;
+const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
+
+const getHexCenter = (row: number, col: number, offsetX: number) => {
+  const x = col * HEX_WIDTH + offsetX * HEX_WIDTH;
+  const y = row * (HEX_HEIGHT * 0.75);
+  return { x, y };
+};
+
+const getHexCorners = (cx: number, cy: number) => {
+  // משושה flat-top, SVG coordinates (Y חיובי למטה)
+  // הסדר בכיוון השעון החל מהפינה השמאלית-עליונה
+  // תואם ל-adjacentVertexIds בboard_static.json
+  const angles = [150, 90, 30, -30, -90, -150];
+  return angles.map(degrees => {
+    const angleRad = (degrees * Math.PI) / 180;
+    return {
+      x: cx + HEX_SIZE * Math.cos(angleRad),
+      y: cy + HEX_SIZE * Math.sin(angleRad),
+    };
+  });
+};
+
+// מבנה הלוח הפיזי - 19 אריחים במבנה משושה 3-4-5-4-3
+// כל אריח ממופה לפי הקואורדינטות שלו ב-board_static.json
 const BOARD_LAYOUT = [
-  // שורה 0 - 3 אריחים
-  { tileId: 0, row: 0, col: 0, offsetX: 1 },
-  { tileId: 1, row: 0, col: 1, offsetX: 1 },
-  { tileId: 2, row: 0, col: 2, offsetX: 1 },
-  // שורה 1 - 4 אריחים
-  { tileId: 3, row: 1, col: 0, offsetX: 0.5 },
-  { tileId: 4, row: 1, col: 1, offsetX: 0.5 },
-  { tileId: 5, row: 1, col: 2, offsetX: 0.5 },
-  { tileId: 6, row: 1, col: 3, offsetX: 0.5 },
-  // שורה 2 - 5 אריחים (מרכזית)
-  { tileId: 7, row: 2, col: 0, offsetX: 0 },
-  { tileId: 8, row: 2, col: 1, offsetX: 0 },
-  { tileId: 9, row: 2, col: 2, offsetX: 0 },
-  { tileId: 10, row: 2, col: 3, offsetX: 0 },
-  { tileId: 11, row: 2, col: 4, offsetX: 0 },
-  // שורה 3 - 4 אריחים
-  { tileId: 12, row: 3, col: 0, offsetX: 0.5 },
-  { tileId: 13, row: 3, col: 1, offsetX: 0.5 },
-  { tileId: 14, row: 3, col: 2, offsetX: 0.5 },
-  { tileId: 15, row: 3, col: 3, offsetX: 0.5 },
-  // שורה 4 - 3 אריחים
-  { tileId: 16, row: 4, col: 0, offsetX: 1 },
-  { tileId: 17, row: 4, col: 1, offsetX: 1 },
-  { tileId: 18, row: 4, col: 2, offsetX: 1 },
+  // שורה 0 - 3 אריחים (r=-2): q = 0, 1, 2
+  { tileId: 0, row: 0, col: 0, offsetX: 1 },      // q=0, r=-2
+  { tileId: 1, row: 0, col: 1, offsetX: 1 },      // q=1, r=-2
+  { tileId: 2, row: 0, col: 2, offsetX: 1 },      // q=2, r=-2
+  // שורה 1 - 4 אריחים (r=-1): q = -1, 0, 1, 2
+  { tileId: 3, row: 1, col: 0, offsetX: 0.5 },    // q=-1, r=-1
+  { tileId: 4, row: 1, col: 1, offsetX: 0.5 },    // q=0, r=-1
+  { tileId: 5, row: 1, col: 2, offsetX: 0.5 },    // q=1, r=-1
+  { tileId: 6, row: 1, col: 3, offsetX: 0.5 },    // q=2, r=-1
+  // שורה 2 - 5 אריחים (r=0): q = -2, -1, 0, 1, 2 - השורה האמצעית!
+  { tileId: 7, row: 2, col: 0, offsetX: 0 },      // q=-2, r=0
+  { tileId: 8, row: 2, col: 1, offsetX: 0 },      // q=-1, r=0
+  { tileId: 9, row: 2, col: 2, offsetX: 0 },      // q=0, r=0 (המדבר)
+  { tileId: 10, row: 2, col: 3, offsetX: 0 },     // q=1, r=0
+  { tileId: 18, row: 2, col: 4, offsetX: 0 },     // q=2, r=0
+  // שורה 3 - 4 אריחים (r=1): q = -2, -1, 0, 1
+  { tileId: 11, row: 3, col: 0, offsetX: 0.5 },   // q=-2, r=1
+  { tileId: 12, row: 3, col: 1, offsetX: 0.5 },   // q=-1, r=1
+  { tileId: 13, row: 3, col: 2, offsetX: 0.5 },   // q=0, r=1
+  { tileId: 14, row: 3, col: 3, offsetX: 0.5 },   // q=1, r=1
+  // שורה 4 - 3 אריחים (r=2): q = -2, -1, 0
+  { tileId: 15, row: 4, col: 0, offsetX: 1 },     // q=-2, r=2
+  { tileId: 16, row: 4, col: 1, offsetX: 1 },     // q=-1, r=2
+  { tileId: 17, row: 4, col: 2, offsetX: 1 },     // q=0, r=2
 ];
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -86,12 +111,37 @@ export function createRealGameState(): IGameState {
 
     return {
       id: layout.tileId,
+      q: tileConfig.q,
+      r: tileConfig.r,
       resourceType,
       diceNumber,
       probability: diceNumber ? probabilities[diceNumber] : 0,
       isRobberPresent: isDesert,
       adjacentVertexIds: tileConfig.adjacentVertexIds,
       adjacentEdgeIds: tileConfig.adjacentEdgeIds,
+    };
+  });
+
+  // 4.1 הוספת מידע גיאומטרי לאריחים
+  const tileCenters = new Map<number, { x: number; y: number }>();
+  BOARD_LAYOUT.forEach((layout) => {
+    tileCenters.set(layout.tileId, getHexCenter(layout.row, layout.col, layout.offsetX));
+  });
+
+  // חישוב פעם אחת של כל הפינות לכל אריח
+  const tileCorners = new Map<number, Array<{ x: number; y: number }>>();
+  BOARD_LAYOUT.forEach((layout) => {
+    const center = tileCenters.get(layout.tileId)!;
+    tileCorners.set(layout.tileId, getHexCorners(center.x, center.y));
+  });
+
+  const tilesWithGeometry: ITile[] = tiles.map((tile) => {
+    const center = tileCenters.get(tile.id)!;
+    const corners = tileCorners.get(tile.id)!;
+    return {
+      ...tile,
+      center,
+      polygonPoints: corners.map((corner) => `${corner.x},${corner.y}`).join(' '),
     };
   });
 
@@ -117,6 +167,31 @@ export function createRealGameState(): IGameState {
     };
   });
 
+  // 5.1 חישוב מיקום קודקודים - שימוש באותן פינות שחושבו לאריחים
+  const vertexPositionsAccumulator = new Map<number, Array<{ x: number; y: number }>>();
+  tilesWithGeometry.forEach((tile) => {
+    const corners = tileCorners.get(tile.id)!;
+    
+    tile.adjacentVertexIds.forEach((vertexId, index) => {
+      if (!vertexPositionsAccumulator.has(vertexId)) {
+        vertexPositionsAccumulator.set(vertexId, []);
+      }
+      vertexPositionsAccumulator.get(vertexId)!.push(corners[index]);
+    });
+  });
+
+  const vertexPositions = new Map<number, { x: number; y: number }>();
+  vertexPositionsAccumulator.forEach((positions, vertexId) => {
+    const avgX = positions.reduce((sum, pos) => sum + pos.x, 0) / positions.length;
+    const avgY = positions.reduce((sum, pos) => sum + pos.y, 0) / positions.length;
+    vertexPositions.set(vertexId, { x: avgX, y: avgY });
+  });
+
+  const verticesWithPositions: IVertex[] = vertices.map((vertex) => ({
+    ...vertex,
+    position: vertexPositions.get(vertex.id),
+  }));
+
   // 6. יצירת צלעות מהקונפיגורציה
   const edges: IEdge[] = boardConfig.graph_structure.edge_adjacency.edges.map((e: any) => ({
     id: e.edgeId,
@@ -126,6 +201,20 @@ export function createRealGameState(): IGameState {
     adjacentEdgeIds: e.adjacentEdgeIds,
   }));
 
+  const edgesWithPositions: IEdge[] = edges.map((edge) => {
+    const start = vertexPositions.get(edge.vertexIds[0]);
+    const end = vertexPositions.get(edge.vertexIds[1]);
+    return {
+      ...edge,
+      position: start && end ? {
+        x1: start.x,
+        y1: start.y,
+        x2: end.x,
+        y2: end.y,
+      } : undefined,
+    };
+  });
+
   // 7. יצירת שחקנים
   const players: IPlayerState[] = [
     {
@@ -133,11 +222,11 @@ export function createRealGameState(): IGameState {
       name: 'שחקן 1',
       color: '#FF6B6B',
       resources: {
-        [ResourceType.LUMBER]: 4,
-        [ResourceType.BRICK]: 2,
-        [ResourceType.WOOL]: 3,
-        [ResourceType.GRAIN]: 2,
-        [ResourceType.ORE]: 1,
+        [ResourceType.LUMBER]: 0,
+        [ResourceType.BRICK]: 0,
+        [ResourceType.WOOL]: 0,
+        [ResourceType.GRAIN]: 0,
+        [ResourceType.ORE]: 0,
         [ResourceType.DESERT]: 0,
       },
       developmentCards: [],
@@ -158,11 +247,11 @@ export function createRealGameState(): IGameState {
       name: 'שחקן 2',
       color: '#4ECDC4',
       resources: {
-        [ResourceType.LUMBER]: 3,
-        [ResourceType.BRICK]: 3,
-        [ResourceType.WOOL]: 2,
-        [ResourceType.GRAIN]: 2,
-        [ResourceType.ORE]: 2,
+        [ResourceType.LUMBER]: 0,
+        [ResourceType.BRICK]: 0,
+        [ResourceType.WOOL]: 0,
+        [ResourceType.GRAIN]: 0,
+        [ResourceType.ORE]: 0,
         [ResourceType.DESERT]: 0,
       },
       developmentCards: [],
@@ -183,11 +272,11 @@ export function createRealGameState(): IGameState {
       name: 'שחקן 3',
       color: '#45B7D1',
       resources: {
-        [ResourceType.LUMBER]: 2,
-        [ResourceType.BRICK]: 1,
-        [ResourceType.WOOL]: 4,
-        [ResourceType.GRAIN]: 3,
-        [ResourceType.ORE]: 1,
+        [ResourceType.LUMBER]: 0,
+        [ResourceType.BRICK]: 0,
+        [ResourceType.WOOL]: 0,
+        [ResourceType.GRAIN]: 0,
+        [ResourceType.ORE]: 0,
         [ResourceType.DESERT]: 0,
       },
       developmentCards: [],
@@ -208,11 +297,11 @@ export function createRealGameState(): IGameState {
       name: 'שחקן 4',
       color: '#FFA07A',
       resources: {
-        [ResourceType.LUMBER]: 2,
-        [ResourceType.BRICK]: 2,
-        [ResourceType.WOOL]: 1,
-        [ResourceType.GRAIN]: 3,
-        [ResourceType.ORE]: 3,
+        [ResourceType.LUMBER]: 0,
+        [ResourceType.BRICK]: 0,
+        [ResourceType.WOOL]: 0,
+        [ResourceType.GRAIN]: 0,
+        [ResourceType.ORE]: 0,
         [ResourceType.DESERT]: 0,
       },
       developmentCards: [],
@@ -231,9 +320,9 @@ export function createRealGameState(): IGameState {
   ];
 
   return {
-    tiles,
-    edges,
-    vertices,
+    tiles: tilesWithGeometry,
+    edges: edgesWithPositions,
+    vertices: verticesWithPositions,
     players,
     currentPlayerIndex: 0,
     bankResources: {
@@ -245,8 +334,8 @@ export function createRealGameState(): IGameState {
       [ResourceType.DESERT]: 0,
     },
     developmentCardDeck: [],
-    gamePhase: GamePhase.MAIN_GAME,
-    turnPhase: TurnPhase.ROLLING_DICE,
+    gamePhase: GamePhase.SETUP,
+    turnPhase: TurnPhase.PLACING_SETTLEMENT,
     diceResult: null,
     robberTileId: tiles.findIndex(t => t.resourceType === ResourceType.DESERT),
     longestRoadPlayerId: null,
