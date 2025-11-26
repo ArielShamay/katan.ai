@@ -14,8 +14,6 @@ export interface ITile {
   readonly isRobberPresent: boolean;             // האם השוד נמצא על האריח
   readonly adjacentVertexIds: number[];          // מזהי 6 הקודקודים הסמוכים
   readonly adjacentEdgeIds: number[];            // מזהי 6 הצלעות הסמוכות
-  readonly center?: { x: number; y: number };    // מיקום מרכז האריח לציור
-  readonly polygonPoints?: string;               // רשימת נקודות SVG של המשושה
 }
 
 /**
@@ -28,12 +26,6 @@ export interface IEdge {
   readonly adjacentTileIds: number[];            // אריחים סמוכים (1-2)
   readonly ownerId: string | null;               // מזהה השחקן שבנה כביש (null אם ריק)
   readonly adjacentEdgeIds: number[];            // צלעות סמוכות (לחישוב דרך ארוכה)
-  readonly position?: {                          // נקודות קצה לציור הצלע
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-  };
 }
 
 /**
@@ -48,5 +40,4 @@ export interface IVertex {
   readonly ownerId: string | null;               // מזהה השחקן שבנה (null אם ריק)
   readonly buildingType: BuildingType;           // סוג המבנה (NONE/SETTLEMENT/CITY)
   readonly portType: PortType;                   // סוג הנמל (NONE אם אין)
-  readonly position?: { x: number; y: number };  // מיקום פיזי לציור הקודקוד
 }

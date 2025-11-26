@@ -4,7 +4,7 @@ import PlayerPanel from './components/PlayerPanel';
 import BuildMenu from './components/BuildMenu';
 import { IGameState } from '../src/models/GameState';
 import { ActionType, ResourceType, BuildingType, TurnPhase, GamePhase } from '../src/models/Enums';
-import { createRealGameState } from './utils/gameStateFactory';
+import { createInitialGameState } from './utils/gameStateFactory';
 import costsData from '../config/costs.json';
 
 type BuildMode = 'ROAD' | 'SETTLEMENT' | 'CITY' | 'DEVELOPMENT_CARD' | null;
@@ -21,7 +21,7 @@ const App: React.FC = () => {
     const initGame = async () => {
       try {
         // יצירת לוח אמיתי מהקונפיגורציה
-        const initialState = createRealGameState();
+        const initialState = createInitialGameState();
         setGameState(initialState);
       } catch (error) {
         console.error('Failed to initialize game:', error);
