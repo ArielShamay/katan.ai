@@ -108,6 +108,167 @@ body {
   color: #4CAF50;
 }
 
+/* מסך נחיתה */
+.landing-page {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+}
+
+.landing-card {
+  width: 100%;
+  max-width: 720px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.landing-header h1 {
+  font-size: 2.8rem;
+  color: #1f1f1f;
+  margin-bottom: 10px;
+}
+
+.landing-subtitle {
+  color: #555;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.landing-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #764ba2;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.landing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.landing-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.count-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.count-option {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(118, 75, 162, 0.4);
+  background: transparent;
+  color: #4c1f99;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.count-option.active,
+.count-option:hover {
+  background: rgba(118, 75, 162, 0.12);
+  border-color: #764ba2;
+  color: #2d0e52;
+}
+
+.names-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.name-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(118, 75, 162, 0.06);
+}
+
+.name-field-label {
+  font-weight: 600;
+  color: #4a2c73;
+}
+
+.name-field input {
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 1rem;
+  background: white;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.start-game-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #667eea, #764ba2);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 30px rgba(118, 75, 162, 0.35);
+}
+
+.start-game-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.start-game-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.landing-error {
+  margin-top: -4px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(229, 57, 53, 0.08);
+  color: #b71c1c;
+  font-weight: 600;
+}
+
+.landing-highlights {
+  list-style: none;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: #4a2c73;
+  font-weight: 600;
+}
+
+.landing-highlights li {
+  background: rgba(118, 75, 162, 0.08);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+
 .player-stats {
   display: flex;
   justify-content: space-between;
@@ -436,6 +597,18 @@ body {
   background: #0b7dda;
 }
 
+.action-button.ghost {
+  background: transparent;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+}
+
+.action-button.ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: none;
+}
+
 .action-button.build-btn {
   background: #FF9800;
 }
@@ -447,11 +620,12 @@ body {
 /* כותרת המשחק */
 .game-header {
   position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 20px;
+  right: 20px;
+  left: auto;
+  transform: none;
   background: white;
-  padding: 6px 20px;
+  padding: 8px 24px;
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 100;
@@ -469,6 +643,16 @@ body {
   color: #667eea;
   font-weight: bold;
   font-size: 0.75rem;
+}
+
+.setup-instructions {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 152, 0, 0.15);
+  color: #bf360c;
+  font-weight: 600;
+  text-align: center;
 }
 
 /* תוצאת קוביות */

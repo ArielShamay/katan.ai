@@ -74,32 +74,27 @@ export interface IBoardLayout {
 export class GeometryService {
   /**
    * חישוב לייאאוט מלא של הלוח - STRICT CORNER MAPPING
+   * ✅ Backend now generates vertices in honeycomb-grid order - no offset needed!
    */
   public static calculateLayout(gameState: IGameState): IBoardLayout {
-    // Step 1: Initialize vertex map for strict binding
+    // Step 1: Build vertex map with DIRECT mapping (no offset!)
     const vertexMap = new Map<number, { x: number; y: number }>();
     const tileDataMap = new Map<number, { center: { x: number; y: number }; corners: Array<{ x: number; y: number }> }>();
 
-    // Step 2: THE MAPPING LOOP - Bind logical vertices to physical corners
     gameState.tiles.forEach(tile => {
-      // Create hex instance
       const hex = new Hex({ q: tile.q, r: tile.r });
       const corners = hex.corners;
       const vertexIds = tile.adjacentVertexIds;
 
-      // Store tile center for number rendering
       tileDataMap.set(tile.id, {
         center: { x: hex.x, y: hex.y },
         corners: corners.map(c => ({ x: c.x, y: c.y })),
       });
 
-      // THE MAPPING RULE: Apply rotation offset
+      // ✅ Direct mapping - Backend vertex order now matches honeycomb-grid!
       for (let i = 0; i < 6; i++) {
-        const cornerIndex = (i + 4) % 6; // Rotation offset for Pointy Top
+        const cornerIndex = i; // No offset needed!
         const vertexId = vertexIds[i];
-        
-        // Bind vertex ID to physical corner position
-        // Note: Overwrites are DESIRED for shared vertices (ensures perfect snapping)
         vertexMap.set(vertexId, {
           x: corners[cornerIndex].x,
           y: corners[cornerIndex].y,

@@ -1,13 +1,124 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import GameBoard from './components/GameBoard';
 import PlayerPanel from './components/PlayerPanel';
 import BuildMenu from './components/BuildMenu';
+import LandingPage from './components/LandingPage';
 import { IGameState } from '../src/models/GameState';
-import { ActionType, ResourceType, BuildingType, TurnPhase, GamePhase } from '../src/models/Enums';
+import { ResourceType, BuildingType, TurnPhase, GamePhase } from '../src/models/Enums';
 import { createInitialGameState } from './utils/gameStateFactory';
 import costsData from '../config/costs.json';
 
 type BuildMode = 'ROAD' | 'SETTLEMENT' | 'CITY' | 'DEVELOPMENT_CARD' | null;
+
+const grantSetupResourcesToPlayer = (
+  state: IGameState,
+  playerId: string,
+  vertexId: number
+): IGameState => {
+  const vertex = state.vertices.find(v => v.id === vertexId);
+  if (!vertex) {
+    return state;
+  }
+
+  const playerIndex = state.players.findIndex(p => p.id === playerId);
+  if (playerIndex === -1) {
+    return state;
+  }
+
+  const resourcesToAdd: Partial<Record<ResourceType, number>> = {};
+
+  vertex.adjacentTileIds.forEach(tileId => {
+    const tile = state.tiles.find(t => t.id === tileId);
+    if (!tile || tile.resourceType === ResourceType.DESERT || tile.isRobberPresent) {
+      return;
+    }
+
+    resourcesToAdd[tile.resourceType] = (resourcesToAdd[tile.resourceType] ?? 0) + 1;
+  });
+
+  if (Object.keys(resourcesToAdd).length === 0) {
+    return state;
+  }
+
+  const updatedPlayers = state.players.map((player, index) => {
+    if (index !== playerIndex) {
+      return player;
+    }
+
+    const updatedResources: Record<ResourceType, number> = { ...player.resources };
+    for (const [resource, amount] of Object.entries(resourcesToAdd)) {
+      const resourceType = resource as ResourceType;
+      updatedResources[resourceType] = updatedResources[resourceType] + amount;
+    }
+
+    return {
+      ...player,
+      resources: updatedResources,
+    };
+  });
+
+  const updatedBankResources: Record<ResourceType, number> = { ...state.bankResources };
+  for (const [resource, amount] of Object.entries(resourcesToAdd)) {
+    const resourceType = resource as ResourceType;
+    updatedBankResources[resourceType] = Math.max(0, updatedBankResources[resourceType] - amount);
+  }
+
+  return {
+    ...state,
+    players: updatedPlayers,
+    bankResources: updatedBankResources,
+  };
+};
+
+const advanceSetupTurnState = (state: IGameState): IGameState => {
+  const totalPlayers = state.players.length;
+  if (totalPlayers === 0) {
+    return state;
+  }
+
+  let nextPlayerIndex = state.currentPlayerIndex;
+  let setupRound = state.setupRound ?? 1;
+  let setupDirection = state.setupDirection ?? 1;
+
+  if (setupDirection === 1) {
+    if (nextPlayerIndex < totalPlayers - 1) {
+      nextPlayerIndex += 1;
+    } else {
+      setupDirection = -1;
+      setupRound = 2;
+    }
+
+    return {
+      ...state,
+      currentPlayerIndex: nextPlayerIndex,
+      setupRound,
+      setupDirection,
+      turnPhase: TurnPhase.PLACING_SETTLEMENT,
+    };
+  }
+
+  if (nextPlayerIndex > 0) {
+    nextPlayerIndex -= 1;
+    return {
+      ...state,
+      currentPlayerIndex: nextPlayerIndex,
+      setupRound,
+      setupDirection,
+      turnPhase: TurnPhase.PLACING_SETTLEMENT,
+    };
+  }
+
+  return {
+    ...state,
+    currentPlayerIndex: 0,
+    setupRound: 2,
+    setupDirection: -1,
+    gamePhase: GamePhase.MAIN_GAME,
+    turnPhase: TurnPhase.ROLLING_DICE,
+  };
+};
+
+const RESERVED_NAMES = ['bank', 'בנק', 'robber', 'שודד', 'admin', 'system'];
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<IGameState | null>(null);
@@ -15,22 +126,192 @@ const App: React.FC = () => {
   const [buildMode, setBuildMode] = useState<BuildMode>(null);
   const [showDiceResult, setShowDiceResult] = useState(false);
   const [lastDiceResult, setLastDiceResult] = useState<number | null>(null);
+  const [isLandingVisible, setIsLandingVisible] = useState(true);
+  const [isStartingGame, setIsStartingGame] = useState(false);
+  const [savedPlayerNames, setSavedPlayerNames] = useState<string[]>([]);
+  const [pendingSetupVertexId, setPendingSetupVertexId] = useState<number | null>(null);
 
-  useEffect(() => {
-    // אתחול משחק עם 4 שחקנים
-    const initGame = async () => {
-      try {
-        // יצירת לוח אמיתי מהקונפיגורציה
-        const initialState = createInitialGameState();
-        setGameState(initialState);
-      } catch (error) {
-        console.error('Failed to initialize game:', error);
-        alert('שגיאה באתחול המשחק: ' + (error as Error).message);
+  const reservedNameSet = useMemo(() => new Set(RESERVED_NAMES.map(name => name.toLowerCase())), []);
+
+  const resetSetupState = () => {
+    setPendingSetupVertexId(null);
+    setBuildMenuOpen(false);
+    setBuildMode(null);
+    setShowDiceResult(false);
+    setLastDiceResult(null);
+  };
+
+  const isSetupPhase = gameState?.gamePhase === GamePhase.SETUP;
+
+  const validatePlayerNames = (names: string[]): string | null => {
+    const seen = new Set<string>();
+
+    for (const name of names) {
+      const normalized = name.trim().toLowerCase();
+      if (normalized.length === 0) {
+        return 'שם שחקן אינו יכול להיות ריק.';
       }
+      if (reservedNameSet.has(normalized)) {
+        return `השם "${name}" שמור לשימוש המערכת.`;
+      }
+      if (seen.has(normalized)) {
+        return 'אסור להשתמש באותו שם יותר מפעם אחת.';
+      }
+      seen.add(normalized);
+    }
+
+    return null;
+  };
+
+  const handleStartGame = (playerNames: string[]) => {
+    try {
+      setIsStartingGame(true);
+      const sanitizedNames = playerNames
+        .slice(0, 4)
+        .map((name, index) => name.trim() || `שחקן ${index + 1}`);
+
+      if (sanitizedNames.length < 2) {
+        alert('יש לבחור לפחות שני שחקנים.');
+        return;
+      }
+
+      const validationError = validatePlayerNames(sanitizedNames);
+      if (validationError) {
+        alert(validationError);
+        return;
+      }
+
+      resetSetupState();
+      const initialState = createInitialGameState(sanitizedNames);
+      setGameState(initialState);
+      setIsLandingVisible(false);
+      setSavedPlayerNames(sanitizedNames);
+    } catch (error) {
+      console.error('Failed to initialize game:', error);
+      alert('שגיאה באתחול המשחק: ' + (error as Error).message);
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
+  const handleNewGame = () => {
+    if (gameState && !window.confirm('להתחיל משחק חדש? ההתקדמות הנוכחית תאופס.')) {
+      return;
+    }
+
+    if (gameState) {
+      setSavedPlayerNames(gameState.players.map(player => player.name));
+    }
+
+    setGameState(null);
+    resetSetupState();
+    setIsLandingVisible(true);
+    setIsStartingGame(false);
+  };
+
+  const handleSetupSettlementPlacement = (vertexId: number) => {
+    if (!gameState) return;
+    if (pendingSetupVertexId !== null) {
+      alert('יש להציב תחילה דרך מחוברת לכפר שהונח לפני בחירת קודקוד נוסף.');
+      return;
+    }
+
+    const vertex = gameState.vertices.find(v => v.id === vertexId);
+    if (!vertex) return;
+
+    if (vertex.ownerId) {
+      alert('המיקום כבר תפוס.');
+      return;
+    }
+
+    const hasNeighboringSettlement = vertex.adjacentVertexIds.some(adjacentId => {
+      const neighbor = gameState.vertices.find(v => v.id === adjacentId);
+      return neighbor?.ownerId !== null;
+    });
+
+    if (hasNeighboringSettlement) {
+      alert('חובה לשמור מרווח של קודקוד אחד בין כפרים.');
+      return;
+    }
+
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+    const updatedVertices = gameState.vertices.map(v =>
+      v.id === vertexId
+        ? { ...v, ownerId: currentPlayer.id, buildingType: BuildingType.SETTLEMENT }
+        : v
+    );
+
+    const updatedPlayers = gameState.players.map(p =>
+      p.id === currentPlayer.id
+        ? {
+            ...p,
+            settlementsRemaining: p.settlementsRemaining - 1,
+            victoryPoints: p.victoryPoints + 1,
+          }
+        : p
+    );
+
+    setGameState({
+      ...gameState,
+      vertices: updatedVertices,
+      players: updatedPlayers,
+      turnPhase: TurnPhase.PLACING_SETTLEMENT,
+    });
+    setPendingSetupVertexId(vertexId);
+  };
+
+  const handleSetupRoadPlacement = (edgeId: number) => {
+    if (!gameState) return;
+
+    if (pendingSetupVertexId === null) {
+      alert('בחר קודם קודקוד להצבת כפר ולאחר מכן בחר דרך סמוכה.');
+      return;
+    }
+
+    const edge = gameState.edges.find(e => e.id === edgeId);
+    if (!edge) return;
+
+    if (edge.ownerId) {
+      alert('הדרך כבר תפוסה.');
+      return;
+    }
+
+    if (!edge.vertexIds.includes(pendingSetupVertexId)) {
+      alert('יש לבחור דרך צמודה לכפר שהרגע הונח.');
+      return;
+    }
+
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+    const updatedEdges = gameState.edges.map(e =>
+      e.id === edgeId
+        ? { ...e, ownerId: currentPlayer.id }
+        : e
+    );
+
+    const updatedPlayers = gameState.players.map(p =>
+      p.id === currentPlayer.id
+        ? { ...p, roadsRemaining: p.roadsRemaining - 1 }
+        : p
+    );
+
+    let nextState: IGameState = {
+      ...gameState,
+      edges: updatedEdges,
+      players: updatedPlayers,
     };
 
-    initGame();
-  }, []);
+    if ((gameState.setupRound ?? 1) === 2) {
+      nextState = grantSetupResourcesToPlayer(nextState, currentPlayer.id, pendingSetupVertexId);
+    }
+
+    nextState = advanceSetupTurnState(nextState);
+
+    setGameState(nextState);
+    setPendingSetupVertexId(null);
+    setBuildMode(null);
+  };
 
   const distributeResources = (roll: number, currentGameState: IGameState): IGameState => {
     if (roll === 7) return currentGameState; // Robber logic not implemented yet
@@ -71,59 +352,15 @@ const App: React.FC = () => {
   const handleVertexClick = (vertexId: number) => {
     if (!gameState) return;
 
+    if (isSetupPhase) {
+      handleSetupSettlementPlacement(vertexId);
+      return;
+    }
+
     try {
       const currentPlayer = gameState.players[gameState.currentPlayerIndex];
       const vertex = gameState.vertices[vertexId];
       
-      // טיפול בשלב ההכנה (SETUP)
-      if (gameState.gamePhase === GamePhase.SETUP) {
-        if (vertex.ownerId) {
-          alert('מיקום תפוס!');
-          return;
-        }
-        
-        // הצבת כפר חינם
-        const newVertices = gameState.vertices.map(v =>
-          v.id === vertexId
-            ? { ...v, ownerId: currentPlayer.id, buildingType: BuildingType.SETTLEMENT }
-            : v
-        );
-
-        let newPlayers = [...gameState.players];
-        const playerIndex = newPlayers.findIndex(p => p.id === currentPlayer.id);
-        
-        newPlayers[playerIndex] = {
-          ...currentPlayer,
-          settlementsRemaining: currentPlayer.settlementsRemaining - 1,
-          victoryPoints: currentPlayer.victoryPoints + 1
-        };
-
-        // אם זה הכפר השני (נשאר 3), קבלת משאבים
-        if (newPlayers[playerIndex].settlementsRemaining === 3) {
-           // חלוקת משאבים מהאריחים הסמוכים
-           vertex.adjacentTileIds.forEach(tileId => {
-             const tile = gameState.tiles.find(t => t.id === tileId);
-             if (tile && tile.resourceType !== ResourceType.DESERT) {
-               const currentAmount = newPlayers[playerIndex].resources[tile.resourceType];
-               newPlayers[playerIndex] = {
-                 ...newPlayers[playerIndex],
-                 resources: {
-                   ...newPlayers[playerIndex].resources,
-                   [tile.resourceType]: currentAmount + 1
-                 }
-               };
-             }
-           });
-        }
-
-        setGameState({
-          ...gameState,
-          vertices: newVertices,
-          players: newPlayers,
-        });
-        return;
-      }
-
       // במצב בנייה של כפר או עיר
       if (buildMode === 'SETTLEMENT' || buildMode === 'CITY') {
         if (vertex.ownerId && buildMode === 'SETTLEMENT') {
@@ -206,6 +443,15 @@ const App: React.FC = () => {
 
   const handleEdgeClick = (edgeId: number) => {
     if (!gameState) return;
+
+    if (isSetupPhase) {
+      if (pendingSetupVertexId === null) {
+        alert('עליך להניח כפר לפני בחירת דרך בשלב ההכנה.');
+        return;
+      }
+      handleSetupRoadPlacement(edgeId);
+      return;
+    }
 
     try {
       const currentPlayer = gameState.players[gameState.currentPlayerIndex];
@@ -352,24 +598,21 @@ const App: React.FC = () => {
     }
   };
 
-  if (!gameState) {
+  if (isLandingVisible || !gameState) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        height: '100vh',
-        color: 'white',
-        fontSize: '2rem'
-      }}>
-        טוען משחק...
-      </div>
+      <LandingPage 
+        onStartGame={handleStartGame}
+        isStarting={isStartingGame}
+        initialNames={savedPlayerNames}
+        validateNames={validatePlayerNames}
+      />
     );
   }
 
   // חלוקת שחקנים לפאנלים
-  const leftPlayers = gameState.players.slice(0, 2);
-  const rightPlayers = gameState.players.slice(2);
+  const midpoint = Math.ceil(gameState.players.length / 2);
+  const leftPlayers = gameState.players.slice(0, midpoint);
+  const rightPlayers = gameState.players.slice(midpoint);
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
 
   return (
@@ -380,7 +623,7 @@ const App: React.FC = () => {
           <PlayerPanel
             key={player.id}
             player={player}
-            isActive={index === gameState.currentPlayerIndex}
+            isActive={player.id === currentPlayer.id}
           />
         ))}
       </div>
@@ -390,9 +633,16 @@ const App: React.FC = () => {
         <div className="game-header">
           <h1>Settlers of Catan</h1>
           <div className="game-phase">
-            {gameState.gamePhase === 'SETUP' ? 'שלב הכנה' : 'משחק רגיל'}
+            {gameState.gamePhase === GamePhase.SETUP ? 'שלב הכנה' : 'משחק רגיל'}
           </div>
         </div>
+        {isSetupPhase && (
+          <div className="setup-instructions">
+            {pendingSetupVertexId === null
+              ? '⚒️ בחר קודקוד פנוי להצבת כפר חינמי'
+              : '🛣️ עכשיו בחר דרך צמודה לכפר שהונח'}
+          </div>
+        )}
 
         {buildMode && (
           <div className="build-mode-banner">
@@ -454,6 +704,12 @@ const App: React.FC = () => {
           >
             ✓ סיים תור
           </button>
+          <button 
+            className="action-button ghost" 
+            onClick={handleNewGame}
+          >
+            ↻ משחק חדש
+          </button>
         </div>
       </div>
 
@@ -463,7 +719,7 @@ const App: React.FC = () => {
           <PlayerPanel
             key={player.id}
             player={player}
-            isActive={index + 2 === gameState.currentPlayerIndex}
+            isActive={player.id === currentPlayer.id}
           />
         ))}
       </div>

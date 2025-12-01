@@ -15,13 +15,16 @@ import { ResourceType } from '../../src/models/Enums';
 const PLAYER_COLORS = ['#E53935', '#1E88E5', '#43A047', '#FB8C00'];
 
 /**
- * יצירת 4 שחקנים התחלתיים
+ * יצירת שחקנים התחלתיים בהתאם לשמות שנבחרו במסך הנחיתה
  */
-function createPlayers(): IPlayerState[] {
-  return PLAYER_COLORS.map((color, index) => ({
+function createPlayers(chosenNames?: string[]): IPlayerState[] {
+  const sanitizedNames = chosenNames?.slice(0, PLAYER_COLORS.length);
+  const totalPlayers = sanitizedNames?.length ?? PLAYER_COLORS.length;
+
+  return Array.from({ length: totalPlayers }, (_, index) => ({
     id: `player-${index + 1}`,
-    name: `שחקן ${index + 1}`,
-    color,
+    name: sanitizedNames?.[index]?.trim() || `שחקן ${index + 1}`,
+    color: PLAYER_COLORS[index % PLAYER_COLORS.length],
     resources: {
       [ResourceType.LUMBER]: 0,
       [ResourceType.BRICK]: 0,
@@ -48,13 +51,13 @@ function createPlayers(): IPlayerState[] {
 /**
  * יצירת מצב משחק התחלתי מלא
  */
-export function createInitialGameState(): IGameState {
+export function createInitialGameState(playerNames?: string[]): IGameState {
   // Generate board procedurally (tiles, vertices, edges)
   const baseState = ProceduralBoardGenerator.generateInitialGameState();
   
   // Add players
   return {
     ...baseState,
-    players: createPlayers(),
+    players: createPlayers(playerNames),
   };
 }

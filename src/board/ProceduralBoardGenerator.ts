@@ -14,10 +14,14 @@
  * - Perfect honeycomb structure
  */
 
+import { defineHex, Orientation } from 'honeycomb-grid';
 import { ResourceType, BuildingType, PortType, GamePhase, TurnPhase } from '../models/Enums';
 import { ITile, IVertex, IEdge } from '../models/BoardComponents';
 import { IGameState } from '../models/GameState';
 import { GAME_CONSTANTS } from '../models/Constants';
+
+const DedupHex = defineHex({ dimensions: 1, orientation: Orientation.POINTY });
+const CORNER_KEY_PRECISION = 6;
 
 /**
  * מפת הלוח הסטנדרטית של קטאן (3-4-5-4-3)
@@ -70,51 +74,6 @@ function shuffleArray<T>(array: T[]): T[] {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
-}
-
-/**
- * מחשב hash ייחודי עבור קודקוד מסוים של אריח
- * הקואורדינטות הן של האריח והכיוון הוא המיקום של הפינה (0-5)
- * 
- * ALGORITHM: Normalize to vertex center using axial coordinate offsets
- * Each corner direction has specific offset pattern
- */
-function computeVertexHash(tileQ: number, tileR: number, cornerDirection: number): string {
-  // כל פינה מייצגת קודקוד ייחודי המשותף ל-3 אריחים לכל היותר
-  // נשתמש בנורמליזציה של הקואורדינטות כדי ליצור hash אחיד
-  
-  // Corner offsets in axial coordinates (clockwise from top)
-  // Direction 0: top (north)
-  // Direction 1: top-right (northeast)
-  // Direction 2: bottom-right (southeast)
-  // Direction 3: bottom (south)
-  // Direction 4: bottom-left (southwest)
-  // Direction 5: top-left (northwest)
-  
-  const offsets = [
-    { dq: 0, dr: -1, sub: 3 },    // 0: top
-    { dq: 1, dr: -1, sub: 4 },    // 1: top-right
-    { dq: 1, dr: 0, sub: 5 },     // 2: bottom-right
-    { dq: 0, dr: 1, sub: 0 },     // 3: bottom
-    { dq: -1, dr: 1, sub: 1 },    // 4: bottom-left
-    { dq: -1, dr: 0, sub: 2 },    // 5: top-left
-  ];
-  
-  const offset = offsets[cornerDirection];
-  const neighborQ = tileQ + offset.dq;
-  const neighborR = tileR + offset.dr;
-  
-  // Create normalized hash using smallest coordinate values
-  const coords = [
-    { q: tileQ, r: tileR, sub: cornerDirection },
-    { q: neighborQ, r: neighborR, sub: offset.sub },
-  ].sort((a, b) => {
-    if (a.q !== b.q) return a.q - b.q;
-    if (a.r !== b.r) return a.r - b.r;
-    return a.sub - b.sub;
-  });
-  
-  return `${coords[0].q},${coords[0].r}:${coords[0].sub}`;
 }
 
 /**
@@ -204,25 +163,25 @@ export class ProceduralBoardGenerator {
 
     tiles.forEach(tile => {
       const tileVertexIds: number[] = [];
+      const hex = new DedupHex({ q: tile.q, r: tile.r });
+      const corners = hex.corners;
 
-      // Each hex has 6 corners (0-5, clockwise from top)
-      for (let cornerDirection = 0; cornerDirection < 6; cornerDirection++) {
-        const hash = computeVertexHash(tile.q, tile.r, cornerDirection);
+      for (let cornerIndex = 0; cornerIndex < 6; cornerIndex++) {
+        const corner = corners[cornerIndex];
+        const hash = `${corner.x.toFixed(CORNER_KEY_PRECISION)},${corner.y.toFixed(CORNER_KEY_PRECISION)}`;
 
         if (!vertexMap.has(hash)) {
-          // Create new vertex
           const newVertex: IVertex = {
             id: vertexIdCounter++,
             adjacentTileIds: [tile.id],
-            adjacentEdgeIds: [], // Will be filled in Step 3
-            adjacentVertexIds: [], // Will be calculated after all vertices exist
+            adjacentEdgeIds: [],
+            adjacentVertexIds: [],
             ownerId: null,
             buildingType: BuildingType.NONE,
             portType: PortType.NONE,
           };
           vertexMap.set(hash, newVertex);
         } else {
-          // Add tile to existing vertex
           const existingVertex = vertexMap.get(hash)!;
           if (!existingVertex.adjacentTileIds.includes(tile.id)) {
             existingVertex.adjacentTileIds.push(tile.id);
